@@ -3,6 +3,10 @@
 __all__ = ['noop', 'shortcut', 'Inception', 'InceptionBlock', 'InceptionTime', 'InceptionTimeSgm']
 
 # Cell
+import torch.nn as nn
+import torch as torch
+
+# Cell
 # This is an unofficial PyTorch implementation by Ignacio Oguiza - oguiza@gmail.com based on:
 
 # Fawaz, H. I., Lucas, B., Forestier, G., Pelletier, C., Schmidt, D. F., Weber, J., ... & Petitjean, F. (2019). InceptionTime: Finding AlexNet for Time Series Classification. arXiv preprint arXiv:1909.04939.
@@ -106,7 +110,8 @@ class InceptionTimeSgm(nn.Module):
     def __init__(self, n_in, n_out):
         super().__init__()
         self.inc = InceptionTime(n_in, n_out)
-        self.sig = SigmoidRange(-1,1)
+        self.low, self.high = -1., 1.
 
     def forward(self, x):
+        torch.sigmoid(self.inc(x)) * (self.high - self.low) + self.low
         return self.sig(self.inc(x))
