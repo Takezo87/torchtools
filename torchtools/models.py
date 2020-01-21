@@ -113,5 +113,4 @@ class InceptionTimeSgm(nn.Module):
         self.low, self.high = -1., 1.
 
     def forward(self, x):
-        torch.sigmoid(self.inc(x)) * (self.high - self.low) + self.low
-        return self.sig(self.inc(x))
+        return torch.sigmoid(self.inc(x)) * (self.high - self.low) + self.low

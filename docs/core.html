@@ -35,6 +35,9 @@ summary: "summary"
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+
 <div class="output_wrapper">
 <div class="output">
 
@@ -42,7 +45,7 @@ summary: "summary"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="test" class="doc_header"><code>test</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L6" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>test</code>()</p>
+<h4 id="test" class="doc_header"><code>test</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L12" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>test</code>()</p>
 </blockquote>
 <p>a test function</p>
 
@@ -99,7 +102,7 @@ summary: "summary"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="leaky_loss" class="doc_header"><code>leaky_loss</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L11" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>leaky_loss</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>alpha</code></strong>=<em><code>0.05</code></em>)</p>
+<h4 id="leaky_loss" class="doc_header"><code>leaky_loss</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L17" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>leaky_loss</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>alpha</code></strong>=<em><code>0.05</code></em>)</p>
 </blockquote>
 <p>objective function, including negative predictions with factor alpha</p>
 
@@ -173,7 +176,7 @@ summary: "summary"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="unweighted_profit" class="doc_header"><code>unweighted_profit</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L19" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>unweighted_profit</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>threshold</code></strong>=<em><code>0</code></em>)</p>
+<h4 id="unweighted_profit" class="doc_header"><code>unweighted_profit</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L26" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>unweighted_profit</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>threshold</code></strong>=<em><code>0</code></em>)</p>
 </blockquote>
 <p>metric, negative predictions ignored, y_true of positive predictions equally weighted</p>
 
@@ -210,7 +213,7 @@ summary: "summary"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="weighted_profit" class="doc_header"><code>weighted_profit</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L27" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>weighted_profit</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>threshold</code></strong>=<em><code>0</code></em>)</p>
+<h4 id="weighted_profit" class="doc_header"><code>weighted_profit</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L34" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>weighted_profit</code>(<strong><code>preds</code></strong>, <strong><code>y_true</code></strong>, <strong><code>threshold</code></strong>=<em><code>0</code></em>)</p>
 </blockquote>
 <p>metric, negative predictions ignored, results weighted by positive predictions
 adding threshold possible</p>
@@ -243,6 +246,27 @@ adding threshold possible</p>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_markdown rendered_html output_subarea ">
+<h4 id="get_loss_fn" class="doc_header"><code>get_loss_fn</code><a href="https://github.com/Takezo87/torchtools/tree/master/torchtools/core.py#L43" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>get_loss_fn</code>(<strong><code>loss_fn_name</code></strong>, <strong>**<code>kwargs</code></strong>)</p>
+</blockquote>
+<p>wrapper to create a partial with a more convenient <strong>name</strong> attribute</p>
+
+</div>
+
+</div>
+
+</div>
+</div>
 
 </div>
 <div class="cell border-box-sizing code_cell rendered">

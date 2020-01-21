@@ -6,15 +6,21 @@ index = {"test": "00_core.ipynb",
          "leaky_loss": "00_core.ipynb",
          "unweighted_profit": "00_core.ipynb",
          "weighted_profit": "00_core.ipynb",
+         "get_loss_fn": "00_core.ipynb",
          "noop": "01_models.ipynb",
          "shortcut": "01_models.ipynb",
          "Inception": "01_models.ipynb",
          "InceptionBlock": "01_models.ipynb",
          "InceptionTime": "01_models.ipynb",
-         "InceptionTimeSgm": "01_models.ipynb"}
+         "InceptionTimeSgm": "01_models.ipynb",
+         "random_curve_generator": "02_augmentations.ipynb",
+         "random_cum_curve_generator": "02_augmentations.ipynb",
+         "random_cum_noise_generator": "02_augmentations.ipynb",
+         "magnoise": "02_augmentations.ipynb"}
 
 modules = ["core.py",
-           "models.py"]
+           "models.py",
+           "augmentations.py"]
 
 doc_url = "https://Takezo87.github.io/torchtools/"
 
