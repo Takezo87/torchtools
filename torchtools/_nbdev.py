@@ -16,7 +16,9 @@ index = {"test": "00_core.ipynb",
          "random_curve_generator": "02_augmentations.ipynb",
          "random_cum_curve_generator": "02_augmentations.ipynb",
          "random_cum_noise_generator": "02_augmentations.ipynb",
-         "magnoise": "02_augmentations.ipynb"}
+         "magnoise": "02_augmentations.ipynb",
+         "timewarp": "02_augmentations.ipynb",
+         "magwarp": "02_augmentations.ipynb"}
 
 modules = ["core.py",
            "models.py",
