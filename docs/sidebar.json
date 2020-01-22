@@ -3,6 +3,7 @@
     "Overview": "/",
     "Core": "/core",
     "Title": "/models",
+    "Data": "/data",
     "augmentations": "/augmentations"
   }
 }
