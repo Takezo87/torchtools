@@ -1,6 +1,7 @@
 {
   "torchtools": {
     "Overview": "/",
+    "Core": "/core",
     "Title": "/augmentations"
   }
 }

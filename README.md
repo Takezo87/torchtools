@@ -8,14 +8,12 @@
 
 -->
 
-# Title
-
-> summary
-
-
 # Torchtools
 
-## Core
+> Description
+
+
+# Core
 
 > Summary description here.
 
