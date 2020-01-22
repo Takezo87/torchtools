@@ -2,6 +2,7 @@
   "torchtools": {
     "Overview": "/",
     "Core": "/core",
-    "Title": "/augmentations"
+    "Title": "/models",
+    "augmentations": "/augmentations"
   }
 }
