@@ -18,9 +18,6 @@ entries:
     - output: web,pdf
       title: Data
       url: /data
-    - output: web,pdf
-      title: augmentations
-      url: /augmentations
     output: web
     title: torchtools
   output: web

@@ -16,18 +16,11 @@ index = {"test": "00_core.ipynb",
          "plot_ts": "10_data.ipynb",
          "TSItem": "10_data.ipynb",
          "TSTensor": "10_data.ipynb",
-         "TensorFloat": "10_data.ipynb",
-         "random_curve_generator": "20_augmentations.ipynb",
-         "random_cum_curve_generator": "20_augmentations.ipynb",
-         "random_cum_noise_generator": "20_augmentations.ipynb",
-         "magnoise": "20_augmentations.ipynb",
-         "timewarp": "20_augmentations.ipynb",
-         "magwarp": "20_augmentations.ipynb"}
+         "TensorFloat": "10_data.ipynb"}
 
 modules = ["core.py",
            "models.py",
-           "data.py",
-           "augmentations.py"]
+           "data.py"]
 
 doc_url = "https://Takezo87.github.io/torchtools/"
 
