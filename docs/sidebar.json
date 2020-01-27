@@ -4,6 +4,7 @@
     "Core": "/core",
     "Title": "/models",
     "Data": "/data",
-    "augmentations": "/augmentations"
+    "augmentations": "/augmentations",
+    "Datasets": "/datasets"
   }
 }

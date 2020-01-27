@@ -21,6 +21,9 @@ entries:
     - output: web,pdf
       title: augmentations
       url: /augmentations
+    - output: web,pdf
+      title: Datasets
+      url: /datasets
     output: web
     title: torchtools
   output: web
