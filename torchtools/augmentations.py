@@ -155,9 +155,13 @@ def _timenormal(x, magnitude=.1):
 # Cell
 @delegates(Transform.__init__)
 class AugTransform(Transform):
+    split_idx=0
     def __init__(self, magnitude=0.1, **kwargs):
         super().__init__(**kwargs)
         self.magnitude=magnitude
+
+    def __call__(self, x, split_idx=split_idx):
+        return super().__call__(x, split_idx=split_idx)
 
 # Cell
 @delegates()
@@ -202,10 +206,10 @@ def _all_noise_augs(magnitude=0.1):
 
 # Cell
 class RandAugment(AugTransform):
-    def __init__(self, N=2, tfms=None, **kwargs):
+    def __init__(self, N=2, magnitude=0.2, tfms=None, **kwargs):
         super().__init__(**kwargs)
         self.N = N
-        if tfms is None: self.tfms = _all_noise_augs(self.magnitude)
+        if tfms is None: self.tfms = _all_noise_augs(magnitude)
 
     def encodes(self, x:TSTensor):
         fs = np.random.choice(self.tfms, 2, replace=False)
