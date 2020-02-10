@@ -10,12 +10,8 @@
 
 # Torchtools
 
-> Description
+> Provides customized loss functions, metrics and models for prototyping projects. Mainly geared towards time series data at the moment. Under Construction.
 
-
-# Core
-
-> Summary description here.
 
 This file will become your README and also the index of your documentation.
 

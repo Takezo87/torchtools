@@ -85,5 +85,5 @@ class TensorFloat(TensorBase):
     def show(self, ctx=None, **kwargs):
         if 'figsize' in kwargs: del kwargs['figsize']
         assert ctx is not None; 'cannot show a label without ctx'
-        ctx.set_title(f'Label: {self.numpy()}', fontsize=16) ## ctx axes object
+        ctx.set_title(f'Label: {self.numpy():.2f}', fontsize=16) ## ctx axes object
         return ctx
