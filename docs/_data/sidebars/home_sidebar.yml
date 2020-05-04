@@ -14,7 +14,7 @@ entries:
       url: /core
     - output: web,pdf
       title: Title
-      url: /models
+      url: /Untitled
     - output: web,pdf
       title: Data
       url: /data
