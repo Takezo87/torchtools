@@ -281,6 +281,11 @@ def _fillna(x, values):
     for i,v in enumerate(values): np.nan_to_num(x[:,i,:], copy=False, nan=v)
 
 # Cell
+def _normalize(x, means, stds):
+    assert x.shape[-2]==means.shape[0]
+    for i,v in enumerate(means): x[:,i,:]
+
+# Cell
 def df_to_items(df, x_cols, dep, n_train):
     x,y = _get_x(df, x_cols), _get_y(df, dep)
     print(x.shape)

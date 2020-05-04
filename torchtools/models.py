@@ -41,7 +41,7 @@ class Inception(nn.Module):
         self.act = nn.ReLU()
 
     def forward(self, x):
-        input_tensor = x
+        input_tensor = x.to(torch.float)
         x = self.bottleneck(input_tensor)
         for i in range(3):
             out_ = self.conv_layers[i](x)
