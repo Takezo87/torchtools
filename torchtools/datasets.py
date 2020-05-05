@@ -2,7 +2,7 @@
 
 __all__ = ['To3dArray', 'ToArray', 'decompress_from_url', 'get_UCR_univariate_list', 'get_UCR_multivariate_list',
            'get_UCR_univariate', 'get_UCR_multivariate', 'get_UCR_data', 'ucr_to_items', 'get_simple_config',
-           'df_to_items', 'df_to_items_discrete', 'df_get_items']
+           'df_to_items', 'df_to_items_discrete']
 
 # Cell
 from .data import *
@@ -327,12 +327,3 @@ def df_to_items_discrete(df, x_cols, dep, n_train):
     assert not np.isnan(x_dis).any()
 
     return list(zip(x_cont, x_dis, y)), n_train
-
-# Cell
-def df_get_items(df, x_cols, dep, n_train):
-    x,y = _get_x(df, x_cols), _get_y(df, dep)
-    print(x.shape)
-    means,stds,medians =  _calc_stats(x, n_train)
-    _fillna(x, means)
-    assert not np.isnan(x).any()
-    return list(zip(x,y))

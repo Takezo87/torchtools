@@ -245,6 +245,7 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
     '''erasing parts of the timeseries'''
     if magnitude==0: return x
 
+    print(x.shape)
     assert len(x.shape)==2 or len(x.shape)==3, 'tensor needs to be 2D or 3D'
     is_batch = len(x.shape)==3
 
@@ -273,7 +274,7 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
         assert mask.shape[-2] == value.shape[-2]
         output[..., mask]=0
         output.add_(mask.int().to(x.dtype).unsqueeze(0)*value)
-    return output.squeeze_() if not is_batch else output
+    return output.squeeze_(-2) if not is_batch else output
 
 
 # Cell

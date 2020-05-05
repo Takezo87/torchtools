@@ -57,8 +57,7 @@ index = {"test": "00_core.ipynb",
          "ucr_to_items": "30_datasets.ipynb",
          "get_simple_config": "30_datasets.ipynb",
          "df_to_items": "30_datasets.ipynb",
-         "df_to_items_discrete": "30_datasets.ipynb",
-         "df_get_items": "30_datasets.ipynb"}
+         "df_to_items_discrete": "30_datasets.ipynb"}
 
 modules = ["core.py",
            "models.py",

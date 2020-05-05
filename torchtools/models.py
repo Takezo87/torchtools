@@ -141,4 +141,5 @@ class InceptionTimeSgm(nn.Module):
         self.mod = nn.Sequential(InceptionTime(n_in, n_out), Sigmoid(-1., 1.))
 
     def forward(self, x):
+        x = x.float()
         return self.mod(x)

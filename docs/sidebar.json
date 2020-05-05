@@ -2,7 +2,7 @@
   "torchtools": {
     "Overview": "/",
     "Core": "/core",
-    "Title": "/Untitled",
+    "Title": "/models",
     "Data": "/data",
     "augmentations": "/augmentations",
     "Datasets": "/datasets"
