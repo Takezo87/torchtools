@@ -15,10 +15,11 @@ index = {"test": "00_core.ipynb",
          "Sigmoid": "01_models.ipynb",
          "InceptionTimeSgmOld": "01_models.ipynb",
          "InceptionTimeSgm": "01_models.ipynb",
+         "InceptionTimeD": "40_datablock.ipynb",
          "plot_ts": "10_data.ipynb",
          "TSItem": "10_data.ipynb",
          "TSTensor": "10_data.ipynb",
-         "TensorFloat": "10_data.ipynb",
+         "TensorFloat": "40_datablock.ipynb",
          "plot_ts_int": "10_data.ipynb",
          "TSIntTensor": "10_data.ipynb",
          "noise_from_random_curve": "20_augmentations.ipynb",
@@ -57,13 +58,16 @@ index = {"test": "00_core.ipynb",
          "ucr_to_items": "30_datasets.ipynb",
          "get_simple_config": "30_datasets.ipynb",
          "df_to_items": "30_datasets.ipynb",
-         "df_to_items_discrete": "30_datasets.ipynb"}
+         "df_to_items_discrete": "30_datasets.ipynb",
+         "FixedSplitter": "40_datablock.ipynb",
+         "get_discrete_config": "40_datablock.ipynb"}
 
 modules = ["core.py",
            "models.py",
            "data.py",
            "augmentations.py",
-           "datasets.py"]
+           "datasets.py",
+           "datablock.py"]
 
 doc_url = "https://Takezo87.github.io/torchtools/"
 
