@@ -158,5 +158,5 @@ class InceptionTimeD(nn.Module):
     def forward(self, xc, xd):
         x = torch.cat([xc.float(), xd.float()], dim=-2)
         x = x.float()
-        print(f'InceptionTimeSgm dtype {x.dtype}')
+#         print(f'InceptionTimeSgm dtype {x.dtype}')
         return self.mod(x)
