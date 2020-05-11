@@ -8,6 +8,9 @@ from .datasets import *
 
 from .augmentations import *
 
+from .models import *
+from .core import *
+
 # Cell
 from fastai2.data.all import *
 from fastai2.basics import *
