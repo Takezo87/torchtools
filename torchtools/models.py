@@ -11,6 +11,8 @@ import torch.nn.functional as F
 
 from functools import partial
 
+from fastai2.layers import SigmoidRange
+
 # Cell
 # This is an unofficial PyTorch implementation by Ignacio Oguiza - oguiza@gmail.com based on:
 
@@ -142,7 +144,7 @@ class InceptionTimeSgm(nn.Module):
 
     def __init__(self, n_in, n_out, range=(-1,1)):
         super().__init__()
-        self.mod = nn.Sequential(InceptionTime(n_in, n_out), Sigmoid(*range))
+        self.mod = nn.Sequential(InceptionTime(n_in, n_out), SigmoidRange(*range))
 
     def forward(self, x):
         x = x.float()
@@ -185,7 +187,7 @@ class InceptionTimeVar(nn.Module):
         ## enforce positivity of sigma^2
         ##output_sig_pos = tf.log(1 + tf.exp(output_sig)) + 1e-06
 #         output[:,-1] = (output[:,-1].exp()+1).log_() + 1e-06
-        output[:,-1] = F.softplus(output[:,-1])
+        output[:,-1] = F.softplus(output[:,-1].clone())
 
         if getattr(self, 'sigmoid', None): output[:,:-1] = self.sigmoid(output[:,:-1])
         return output
@@ -223,7 +225,7 @@ def nll_leaky_loss(preds, y_true, c=5, alpha=0.5):
     return loss
 
 # Cell
-def qd_loss(preds, y_true, alpha=0.4, l=0.01, s=0.01, add=False):
+def qd_loss(preds, y_true, alpha=0.4, l=0.01, s=0.01, add=False, slope=1.):
     '''
     qd loss implementation adapted for "leaky loss problems"
     preds: predictions for both lower and upper bounds
@@ -231,27 +233,37 @@ def qd_loss(preds, y_true, alpha=0.4, l=0.01, s=0.01, add=False):
     s: smoothing factor for sigmoid
     l: agrangian controlling width vs coverage (default in the paper impl. is 0.01 which seems lowI)
     '''
-    if not add:
-        y_lower, y_upper = preds[:, 0].clone(), preds[:, 1].clone()
-    else:
-        y_lower, y_upper = preds[:, 0].clone(), preds[:,0]+preds[:, 1]
-    # hard counts, how many of the predictions have the right sign?
+    ll = lambda x: F.leaky_relu(x, negative_slope=slope)
+
+    y_lower = preds[:,0].clone()
+    y_upper = preds[:,1].clone() if not add else y_lower+preds[:,1]
+
+#     if not add:
+#         y_lower, y_upper = preds[:, 0].clone(), preds[:, 1].clone()
+#     else:
+#         y_lower, y_upper = preds[:, 0].clone(), preds[:,0].clone()+preds[:, 1].clone()
+# #     hard counts, how many of the predictions have the right sign?
     khu = (torch.sign(y_upper*y_true) > 0).int()
     khl = (torch.sign(y_lower*y_true) > 0).int()
+
+#     return preds.mean()
     # soft counts, sign step function replaced by a smoother sigmoid
-    ksu = torch.sigmoid((y_upper*y_true)*s)
-    ksl = torch.sigmoid((y_true*y_lower)*s)
+
+    ksu = torch.sigmoid((ll(y_upper)*y_true)*s)
+    ksl = torch.sigmoid((y_true*ll(y_lower))*s)
     kh,ks = khu*khl, ksu*ksl
-    print(kh.sum(), ks.sum())
+#     print(kh)
+#     print(kh.sum(), ks.sum())
 
     #mpiw: mean predicted interval width
-    f = 1/kh.sum() if kh.sum()>0 else 1000 ## hack
+    f = 1/(kh.sum()+1e-6)
+#     print((y_upper-y_lower))
     mpiw = ((y_upper-y_lower)*kh).sum()*f
 
     #picp: predicted interval coverage probability
     picp_s = ks.mean()
 
-    print(mpiw, picp_s)
+    print(f'mpiw {mpiw}, pcip_soft: {picp_s}')
     s2 = l*preds.shape[0]/(alpha*(1-alpha))
     s3 = torch.max(torch.zeros(1, device=preds.device), picp_s).pow(2)
     loss_s = mpiw + l*preds.shape[0]/(alpha*(1-alpha)) * torch.max(torch.zeros(1, device=preds.device),
@@ -278,7 +290,7 @@ class InceptionTimeBounds(nn.Module):
         ## enforce positivity of sigma^2
         ##output_sig_pos = tf.log(1 + tf.exp(output_sig)) + 1e-06
 #         output[:,-1] = (output[:,-1].exp()+1).log_() + 1e-06
-        output[:,-1] = F.softplus(output[:,-1])
+        output[:,-1] = F.softplus(output[:,-1].clone())  ## autograd problems when not using clone, why???
 
         if getattr(self, 'sigmoid', None): output[:,:-1] = self.sigmoid(output[:,:-1])
         return output
