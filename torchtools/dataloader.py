@@ -4,7 +4,8 @@ __all__ = ['cpus', 'device', 'bytes2GB', 'totensor', 'toarray', 'to3dtensor', 't
            'to2darray', 'to1darray', 'to3d', 'to2d', 'to1d', 'to2dPlus', 'to3dPlus', 'to2dPlusTensor', 'to2dPlusArray',
            'to3dPlusTensor', 'to3dPlusArray', 'Todtype', 'itemify', 'ifnoneelse', 'cycle_dl', 'stack', 'NumpyTensor',
            'NumpyDatasets', 'TSDatasets', 'TSDatasets2', 'NumpyTensorBlock', 'TSTensorBlock', 'NumpyDataLoader',
-           'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize', 'TSNormalize']
+           'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize', 'TSNormalize',
+           'items_to_arrays', 'TSSplitter']
 
 # Cell
 import numpy as np
@@ -551,7 +552,13 @@ class TSNormalize(Transform):
         return ((x - self.min) / (self.max - self.min)) * (self.range_max - self.range_min) + self.range_min
 
 # Cell
-def _items_to_arrays(items):
+def items_to_arrays(items):
     '''convert list of item tuples into X,y numpy arrays (for use with numpy dataloader)'''
 #     return np.stack([x[0] for x in items]), np.stack([x[1] for x in items])
     return tuple(np.stack([x[i] for x in items]) for i in range(len(items[0])))
+
+# Cell
+def TSSplitter(train_perc=0.8):
+    def _inner(o, **kwargs):
+        return L(range(0, int(len(o)*train_perc))), L(range(int(len(o)*train_perc), len(o)))
+    return _inner
