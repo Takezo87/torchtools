@@ -5,7 +5,7 @@ __all__ = ['noise_from_random_curve', 'noise_from_normal', 'distort_time', 'AugT
            'encodes', 'encodes', 'Zoomin', 'Zoomout', 'RandZoom', 'RandTimesteps', 'encodes', 'encodes', 'encodes',
            'encodes', 'all_zoom_augs', 'TimestepZero', 'TimestepMean', 'Cutout', 'Crop', 'RandomCrop', 'CenterCrop',
            'Maskout', 'Dimout', 'encodes', 'encodes', 'encodes', 'encodes', 'encodes', 'encodes', 'encodes', 'encodes',
-           'all_erasing_augs', 'RandAugment', 'Augmix', 'TSBlur']
+           'all_erasing_augs', 'RandAugment', 'Augmix', 'encodes', 'TSBlur']
 
 # Cell
 import random
@@ -538,7 +538,7 @@ class Augmix(AugTransform):
 
     def encodes(self, x:TSTensor):
         x_aug = torch.zeros_like(x)
-        weights = np.random.dirichlet([self.alpha]*self.N)
+        weights = np.random.dirichlet([self.alpha]*self.k)
         m = np.random.beta(self.alpha, self.alpha)
         pv(f'weights {weights}, m {m}', self.verbose)
         for i in range(self.k):
@@ -548,6 +548,10 @@ class Augmix(AugTransform):
             x_aug += weights[i]*compose_tfms(x, fs[:n+1])
         return m*x + (1-m)*x_aug
 
+
+@Augmix
+def encodes(self, x:TSIntTensor):
+    return cast(self.__call__(TSTensor(x.float())).int(), type(x))
 
 # Cell
 class TSBlur(Transform):
