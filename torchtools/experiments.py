@@ -44,8 +44,6 @@ data_params = defaultdict(lambda:None, {'ds_fn':ds_fn, 'ds_path':ds_path, 'trn_e
               'col_config':col_config, 'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y,
                'ds_full_path':ds_full_path, 'dataset_name':dataset_name})
 
-
-
 # Cell
 #tsai.data.core
 ## slightly adapted version
@@ -121,7 +119,7 @@ class TSDatasets3(NumpyDatasets):
 
 
 # Cell
-def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=[256, 512], ds_type=TSDatasets3):
+def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=[256, 512], ds_type=TSDatasets3, shuffle_train=True):
     '''
     create dataloaders
     '''
@@ -137,7 +135,7 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=[256, 512], ds_type=TSDa
     print(dsets.n_subsets)
     ss = TSStandardize()
     ds = [dsets.subset(i) for i in range(dsets.n_subsets)]
-    dls = TSDataLoaders.from_dsets(*ds, bs=[128]+[256]*len(splits), batch_tfms=[ss])
+    dls = TSDataLoaders.from_dsets(*ds, bs=[128]+[256]*len(splits), batch_tfms=[ss], shuffle_train=shuffle_train)
 #     dls = TSDataLoaders.from_dsets(dsets.train, bs=[128,128])
 
     return dls
@@ -289,7 +287,8 @@ class TSExperiments:
 
         self.bs = self.train_params['bs']
         self.splits = splits
-        self.dls = get_dls(df_base, cols_c, cols_y, splits, cols_d=cols_d, bs=self.bs)
+        self.dls = get_dls(df_base, cols_c, cols_y, splits, cols_d=cols_d, bs=self.bs, shuffle_train=True)
+
 
     def _save_preds(self, test=False):
     #         val_preds_fn = _get_preds_fn()
@@ -323,6 +322,10 @@ class TSExperiments:
 
         print(f'pct_start: {pct_start} div_factor: {div_factor}')
         set_seed(seed)
+        ## reset dls.rng --> consistent shuffling
+        self.dls.train.rng = random.Random(random.randint(0,2**32-1))
+#         huffle_fn(self, idxs): return self.rng.sample(idxs, len(idxs))
+#         print(self.)
     #     model = arch(db.features, db.c)
         model = arch(6,1)
 
@@ -330,7 +333,7 @@ class TSExperiments:
         augs = RandAugment(N=N, magnitude=magnitude, verbose=True) if aug=='randaugment' else Augmix(
             N=N, magnitude=magnitude, verbose=True)
     #     augs  = Augmix(verbose=True)
-        self.dls.after_batch.add(augs)
+#         self.dls.after_batch.add(augs)
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         print(loss_fn)
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path)
