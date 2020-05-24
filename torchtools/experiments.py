@@ -103,9 +103,11 @@ class TSDatasets3(NumpyDatasets):
             y = self.ptls[-1][self.splits[i]]
             X_dis = None if len(self.ptls)==2 else self.ptls[1][self.splits[i]]
             print(X.shape, y.shape, X_dis.shape)
-            return type(self)(X=X, X_dis=X_dis, y=y, n_inp=self.n_inp,
+            res = type(self)(X=X, X_dis=X_dis, y=y, n_inp=self.n_inp,
                                            inplace=self.inplace, tfms=self.tfms,
                                            sel_vars=self.sel_vars, sel_steps=self.sel_steps)
+            res.set_split_idx_fixed(i)
+            return res
 
 
         else:
@@ -116,6 +118,10 @@ class TSDatasets3(NumpyDatasets):
     def vars(self): return self[0][0].shape[-2]
     @property
     def len(self): return self[0][0].shape[-1]
+
+    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    def set_split_idx_fixed(self, i):
+        for tl in self.tls: tl.tfms.split_idx = i
 
 
 # Cell
@@ -287,7 +293,7 @@ class TSExperiments:
 
         self.bs = self.train_params['bs']
         self.splits = splits
-        self.dls = get_dls(df_base, cols_c, cols_y, splits, cols_d=cols_d, bs=self.bs, shuffle_train=True)
+        self.dls = get_dls(df_base, cols_c, cols_y, splits, cols_d=cols_d, bs=self.bs)
 
 
     def _save_preds(self, test=False):
@@ -312,7 +318,8 @@ class TSExperiments:
 
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
-                     N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment', **kwargs):
+                     N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
+                     verbose=False, **kwargs):
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
@@ -330,13 +337,17 @@ class TSExperiments:
         model = arch(6,1)
 
         _remove_augs(self.dls)
-        augs = RandAugment(N=N, magnitude=magnitude, verbose=True) if aug=='randaugment' else Augmix(
-            N=N, magnitude=magnitude, verbose=True)
-    #     augs  = Augmix(verbose=True)
-#         self.dls.after_batch.add(augs)
+        print(aug)
+        if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
+        elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
+        else: augs=None
+        print(augs is None)
+        if augs: self.dls.after_batch.add(augs)
+
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         print(loss_fn)
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path)
+        print(learn.dls.after_batch)
 
         learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div_factor=div_factor)
     #     learn.recorder.plot_losses()
