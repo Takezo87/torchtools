@@ -317,7 +317,7 @@ def df_to_items(df, x_cols, dep, n_train):
 # Cell
 def df_to_items_discrete(df, x_cols, dep, n_train):
     assert len(x_cols)==2, 'conts and discretes needed'
-    x_cont, x_dis, y = _get_x(df, x_cols[0]), _get_x(df, x_cols[1], dtype=int), _get_y(df, dep)
+    x_cont, x_dis, y = _get_x(df, x_cols[0]), _get_x(df, x_cols[1]), _get_y(df, dep)
     print(x_cont.shape, x_dis.shape)
     means,stds,medians =  _calc_stats(x_cont, n_train)
     _fillna(x_cont, means)
@@ -326,4 +326,4 @@ def df_to_items_discrete(df, x_cols, dep, n_train):
     assert not np.isnan(x_cont).any()
     assert not np.isnan(x_dis).any()
 
-    return list(zip(x_cont, x_dis, y)), n_train
+    return list(zip(x_cont, x_dis.astype(np.int16), y)), n_train

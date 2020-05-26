@@ -539,7 +539,7 @@ class Augmix(AugTransform):
         self.N, self.k, self.alpha, self.verbose = N, k, alpha, verbose
         print(f'tfms {tfms}')
         self.tfms = tfms
-        if tfms is None: self.tfms = all_noise_augs(magnitude, verbose=verbose)
+        if tfms is None: self.tfms = all_augs(magnitude, verbose=verbose)
 
     def encodes(self, x:TSTensor):
         x_aug = torch.zeros_like(x)
