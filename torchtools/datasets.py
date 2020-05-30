@@ -325,5 +325,5 @@ def df_to_items_discrete(df, x_cols, dep, n_train):
 
     assert not np.isnan(x_cont).any()
     assert not np.isnan(x_dis).any()
-
+    #convert discrete variable to int only after filling nans, integer types cannot store nan
     return list(zip(x_cont, x_dis.astype(np.int16), y)), n_train

@@ -11,6 +11,8 @@ tmp*
 tags
 data
 experiments
+cols_config.ini
+*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

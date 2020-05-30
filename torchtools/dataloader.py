@@ -3,9 +3,9 @@
 __all__ = ['cpus', 'device', 'bytes2GB', 'totensor', 'toarray', 'to3dtensor', 'to2dtensor', 'to1dtensor', 'to3darray',
            'to2darray', 'to1darray', 'to3d', 'to2d', 'to1d', 'to2dPlus', 'to3dPlus', 'to2dPlusTensor', 'to2dPlusArray',
            'to3dPlusTensor', 'to3dPlusArray', 'Todtype', 'itemify', 'ifnoneelse', 'cycle_dl', 'stack', 'NumpyTensor',
-           'NumpyDatasets', 'TSDatasets', 'TSDatasets2', 'NumpyTensorBlock', 'TSTensorBlock', 'NumpyDataLoader',
-           'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize', 'TSNormalize',
-           'items_to_arrays', 'TSSplitter']
+           'NumpyDatasets', 'TSDatasets', 'TSDatasets2', 'TSDatasets3', 'NumpyTensorBlock', 'TSTensorBlock',
+           'NumpyDataLoader', 'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize',
+           'TSNormalize', 'items_to_arrays', 'TSSplitter']
 
 # Cell
 import numpy as np
@@ -348,6 +348,85 @@ class TSDatasets2(NumpyDatasets):
     @property
     def len(self): return self[0][0].shape[-1]
 
+
+# Cell
+#tsai.data.core
+## slightly adapted version
+##NOTE TODO: Why does _ytype=TensorFloat not work (autograd fails)
+class TSDatasets3(NumpyDatasets):
+    "A dataset that creates tuples from X (and y) and applies `item_tfms`"
+    _xtype, _xdistype, _ytype = TSTensor, TSIntTensor, None # Expected X and y output types (torch.Tensor - default - or subclass)
+    def __init__(self, X=None, X_dis=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
+                 inplace=True, **kwargs):
+        self.inplace = inplace
+        if tls is None:
+            X = itemify(to3darray(X), tup_id=0)
+            X_dis = itemify(to3darray(X_dis), tup_id=0) if X_dis is not None else X_dis
+            y = itemify(y, tup_id=0) if y is not None else y
+            items = tuple((X,)) if y is None else tuple((X,y))
+            if X_dis is not None: items = tuple((X, X_dis, y)) if y is not None else tuple(X, X_dis,)
+            self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))
+
+#         if X_dis is not None: self.X_dis = X_dis
+
+        self.sel_vars = ifnone(sel_vars, slice(None))
+        self.sel_steps = ifnone(sel_steps,slice(None))
+#         self.splits_help = splits
+        self.tls = L(tls if tls else [TfmdLists(item, t, **kwargs) for item,t in zip(items,self.tfms)])
+        self.n_inp = (1 if len(self.tls)==1 else len(self.tls)-1) if n_inp is None else n_inp
+        if len(self.tls[0]) > 0:
+            _tls_types = [self._xtype, self._ytype] if len(self.tls)==2 else [self._xtype, self._xdistype, self._ytype]
+#             print(_tls_types)
+#             print(len(self.tls))
+#             for tl,_typ in zip(self.tls, _tls_types):
+#                 print (len(tl), _typ, type(tl[0]), isinstance(tl[0], torch.Tensor))
+            self.types = L([ifnone(_typ, type(tl[0]) if isinstance(tl[0], torch.Tensor) else tensor) for
+                            tl,_typ in zip(self.tls, _tls_types)])
+
+            self.types = L([ifnone(_typ, type(tl[0]) if isinstance(tl[0], torch.nn.Sequential) else tensor) for
+                            tl,_typ in zip(self.tls, _tls_types)])
+            if self.inplace and X and y: self.ptls=L(
+                [tensor(X), tensor(y)]) if not X_dis else L([tensor(X), tensor(X_dis), tensor(y)])
+            else:
+                self.ptls = L([tl if not self.inplace else tl[:] if type(tl[0]).__name__ == 'memmap' else
+                               tensor(stack(tl[:])) for tl in self.tls])
+
+    def __getitem__(self, it):
+
+#         for i,(ptl,typ) in enumerate(zip(self.ptls,self.types)):
+#             print (i, typ)
+
+#         return tuple([typ(ptl[it])[...,self.sel_vars, self.sel_steps] if i==0 else
+#                       typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
+        ## do not enable slicing for now
+        return tuple([typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
+
+
+    def subset(self, i):
+        if self.inplace:
+            X = self.ptls[0][self.splits[i]]
+            y = self.ptls[-1][self.splits[i]]
+            X_dis = None if len(self.ptls)==2 else self.ptls[1][self.splits[i]]
+            #if X_dis:print(X.shape, y.shape, X_dis.shape)
+            res = type(self)(X=X, X_dis=X_dis, y=y, n_inp=self.n_inp,
+                                           inplace=self.inplace, tfms=self.tfms,
+                                           sel_vars=self.sel_vars, sel_steps=self.sel_steps)
+            res.set_split_idx_fixed(i)
+            return res
+
+
+        else:
+            return type(self)(tls=L(tl.subset(i) for tl in self.tls), n_inp=self.n_inp,
+                                           inplace=self.inplace, tfms=self.tfms,
+                                           sel_vars=self.sel_vars, sel_steps=self.sel_steps)
+    @property
+    def vars(self): return self[0][0].shape[-2]
+    @property
+    def len(self): return self[0][0].shape[-1]
+
+    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    def set_split_idx_fixed(self, i):
+        for tl in self.tls: tl.tfms.split_idx = i
 
 # Cell
 #tsai.data.core
