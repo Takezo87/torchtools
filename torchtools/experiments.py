@@ -220,6 +220,8 @@ class TSExperiments:
 
     '''
     def __init__(self, save_model=False, preds_path=None, model_path=None, results_path=None):
+        ##reproducibility
+        torch.backends.cudnn.deterministic = True
 
         #self.train_params = train_params #training params can change, e.g. when running grid search
         self.save_model = save_model## models are big
@@ -281,13 +283,13 @@ class TSExperiments:
         assert loss_fn_name and n_epochs, 'must pass loss_fn_name, and n_epochs'
 
         print(f'pct_start: {pct_start} div_factor: {div_factor}')
-        set_seed(seed)
+
         ## reset dls.rng --> consistent shuffling
-        self.dls.train.rng = random.Random(random.randint(0,2**32-1))
+
 #         huffle_fn(self, idxs): return self.rng.sample(idxs, len(idxs))
 #         print(self.)
     #     model = arch(db.features, db.c)
-        model = arch(6,1)
+
 
         _remove_augs(self.dls)
         print(aug)
@@ -306,10 +308,19 @@ class TSExperiments:
 
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         print(loss_fn)
-        learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path)
+
+
+        set_seed(seed)
+        self.dls.train.rng = random.Random(random.randint(0,2**32-1))
+
+        model = arch(6,1)
+        learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
+                       wd=wd)
         print(learn.dls.after_batch)
 
-        learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div_factor=div_factor)
+#         print(f'wd: {wd} {learn.wd}')
+        learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
+#         learn.fit_one_cycle(n_epochs, max_lr, wd=wd)
     #     learn.recorder.plot_losses()
     #     learn.recorder.plot_metrics()
         return learn

@@ -39,6 +39,12 @@ col_config['cols_y']= 'y0'
 col_config['id']='anon10hc_6c_y'  ## put it all in one config file with this unique identifier
 
 # Cell
+def _get_arch(arch:str, with_discrete=False):
+    if arch.lower()=='inception': return InceptionTimeSgm if not with_discrete else InceptionTimeD
+    elif arch.lower()=='resnet': return 'ResNet not implemented'
+    else: return None
+
+# Cell
 from fastscript import *
 @call_parse
 def main(n_epochs:Param(help="n_epochs list", nargs='+', type=int)=[10],
@@ -60,6 +66,7 @@ def main(n_epochs:Param(help="n_epochs list", nargs='+', type=int)=[10],
          df_results:Param(help="results dataframe filename", type=str)='results_script.csv',
          config_fn:Param(help="json column configuration filename", type=str)='config2.json',
          config_id:Param(help="column configuration id", type=str)='anon2hc_4c_2d_y',
+         arch:Param(help="model architecture", choices=['inception', 'resnet'], type=str)='inception',
          upper:Param("Convert to uppercase?", bool_arg)=False):
 #     print(msg.upper() if upper else msg)
 
@@ -76,6 +83,7 @@ def main(n_epochs:Param(help="n_epochs list", nargs='+', type=int)=[10],
 #     print(data_params)
 
     train_params['metrics']=[unweighted_profit, unweighted_profit_05]
+    train_params['arch']=_get_arch(arch, col_config['cols_d'] is not None)
     ts_experiment = TSExperiments()
     ts_experiment.setup_data(data_params)
     ts_experiment.setup_training(train_params)

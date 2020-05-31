@@ -31,8 +31,10 @@ def write_config(config, config_fn='config.json', overwrite=False):
 def read_config(conf_id, config_fn='config_json'):
     with open(config_fn, 'r') as f:
         config_dict=json.load(f)
-    try:
-        col_config = config_dict[conf_id]
-    except:
-        print(f'could not load config with id {conf_id}')
+#         print(config_dict)
+        try:
+            col_config = config_dict[conf_id]
+#             print(col_config)
+        except:
+            print(f'could not load config with id {conf_id}')
     return col_config
