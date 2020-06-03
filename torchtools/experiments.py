@@ -203,11 +203,10 @@ def _get_model_fn(prefix='model'):
 
 # Cell
 def _id_from_splits(splits):
-    return '_'.join([str(l[-1]//1000) for l in splits])
+    return '_'.join([str(l[-1]+1//1000) for l in splits])
 
 def _get_ds_id(data_params, splits):
-    return f"{data_params['df_path'].stem}_{data_params['col_config_id']}_\
-{cols_y}_{_id_from_splits(splits)}"
+    return f"{data_params['df_path'].stem}_{data_params['col_config_id']}_{_id_from_splits(splits)}"
 
 
 # Cell
@@ -376,6 +375,8 @@ def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitt
         splits = splitter_fn
 
     cols_c, cols_d, cols_y, cols_config_id = map(col_config.__getitem__, ['cols_c', 'cols_d', 'cols_y', 'id'])
+
+#     dataset_name = f'{df
 
     data_params = defaultdict(lambda:None, {'df_path':df_path, 'splits':splits, 'col_config_id':cols_config_id,
                                             'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y,
