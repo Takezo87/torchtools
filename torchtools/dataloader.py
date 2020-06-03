@@ -359,10 +359,12 @@ class TSDatasets3(NumpyDatasets):
     def __init__(self, X=None, X_dis=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
                  inplace=True, **kwargs):
         self.inplace = inplace
+
         if tls is None:
             X = itemify(to3darray(X), tup_id=0)
             X_dis = itemify(to3darray(X_dis), tup_id=0) if X_dis is not None else X_dis
-            y = itemify(y, tup_id=0) if y is not None else y
+            #toarray(y) only needed if y-elements are not scalars, toarray is time consuming
+            y = itemify(toarray(y), tup_id=0) if y is not None else y
             items = tuple((X,)) if y is None else tuple((X,y))
             if X_dis is not None: items = tuple((X, X_dis, y)) if y is not None else tuple(X, X_dis,)
             self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))

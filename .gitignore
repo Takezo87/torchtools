@@ -13,6 +13,7 @@ data
 experiments
 cols_config.ini
 *.sh
+ToDo.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
