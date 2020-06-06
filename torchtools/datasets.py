@@ -2,11 +2,10 @@
 
 __all__ = ['To3dArray', 'ToArray', 'decompress_from_url', 'get_UCR_univariate_list', 'get_UCR_multivariate_list',
            'get_UCR_univariate', 'get_UCR_multivariate', 'get_UCR_data', 'ucr_to_items', 'get_simple_config',
-           'df_to_items', 'df_to_items_discrete']
+           'items_from_df']
 
 # Cell
 from .data import *
-from .augmentations import *
 
 # Cell
 import numpy as np
@@ -306,24 +305,31 @@ def _normalize(x, means, stds):
     for i,v in enumerate(means): x[:,i,:]
 
 # Cell
-def df_to_items(df, x_cols, dep, n_train):
-    x,y = _get_x(df, x_cols), _get_y(df, dep)
+def items_from_df(df, cols_c, cols_y, n_train, cols_d=None):
+    '''
+    creates timeseries items from a dataframe
+
+    parameters:
+    df: input dataframe
+    cols_c: list of lists of columns for continuous valued channels (one list for each channel)
+    cols_d: (optional) list of lists of columns for discrete valued channels
+    cols_y: (list or single value) target column(s)
+    n_train: int, neeeds to be provided for calculating the stats that are necessary to fill missing values
+
+    return a list of (xc,(xd),y) tuples (one list element for each dataframe row)
+    '''
+    x,y = _get_x(df, cols_c), _get_y(df, cols_y)
     print(x.shape)
     means,stds,medians =  _calc_stats(x, n_train)
     _fillna(x, means)
     assert not np.isnan(x).any()
-    return list(zip(x,y)), n_train
 
-# Cell
-def df_to_items_discrete(df, x_cols, dep, n_train):
-    assert len(x_cols)==2, 'conts and discretes needed'
-    x_cont, x_dis, y = _get_x(df, x_cols[0]), _get_x(df, x_cols[1]), _get_y(df, dep)
-    print(x_cont.shape, x_dis.shape)
-    means,stds,medians =  _calc_stats(x_cont, n_train)
-    _fillna(x_cont, means)
-    _fillna(x_dis, 0)
+    if cols_d:
+        xd = _get_x(df, cols_d)
+        print(xd.shape)
+#         means,stds,medians =  _calc_stats(x, n_train)
+        _fillna(xd, 0)
+        assert not np.isnan(xd).any()
+        return list(zip(x, xd.astype(np.int16), y))
 
-    assert not np.isnan(x_cont).any()
-    assert not np.isnan(x_dis).any()
-    #convert discrete variable to int only after filling nans, integer types cannot store nan
-    return list(zip(x_cont, x_dis.astype(np.int16), y)), n_train
+    return list(zip(x,y))

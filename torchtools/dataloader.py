@@ -3,9 +3,8 @@
 __all__ = ['cpus', 'device', 'bytes2GB', 'totensor', 'toarray', 'to3dtensor', 'to2dtensor', 'to1dtensor', 'to3darray',
            'to2darray', 'to1darray', 'to3d', 'to2d', 'to1d', 'to2dPlus', 'to3dPlus', 'to2dPlusTensor', 'to2dPlusArray',
            'to3dPlusTensor', 'to3dPlusArray', 'Todtype', 'itemify', 'ifnoneelse', 'cycle_dl', 'stack', 'NumpyTensor',
-           'NumpyDatasets', 'TSDatasets', 'TSDatasets2', 'TSDatasets3', 'NumpyTensorBlock', 'TSTensorBlock',
-           'NumpyDataLoader', 'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize',
-           'TSNormalize', 'items_to_arrays', 'TSSplitter']
+           'NumpyDatasets', 'TSDatasets3', 'NumpyTensorBlock', 'TSTensorBlock', 'NumpyDataLoader', 'show_tuple',
+           'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize', 'TSNormalize', 'items_to_arrays']
 
 # Cell
 import numpy as np
@@ -27,7 +26,7 @@ import torch
 # Cell
 from .data import *
 from .datasets import *
-from .augmentations import *
+# from torchtools.augmentations import *
 from .datablock import *
 
 # Cell
@@ -264,93 +263,6 @@ class NumpyDatasets(Datasets):
 
 # Cell
 #tsai.data.core
-#original
-class TSDatasets(NumpyDatasets):
-    "A dataset that creates tuples from X (and y) and applies `item_tfms`"
-    _xtype, _ytype = TSTensor, None # Expected X and y output types (torch.Tensor - default - or subclass)
-    def __init__(self, X=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
-                 inplace=True, **kwargs):
-        self.inplace = inplace
-        if tls is None:
-            X = itemify(X, tup_id=0)
-            y = itemify(y, tup_id=0) if y is not None else y
-            items = tuple((X)) if y is None else tuple((X,y))
-            self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))
-        self.sel_vars = ifnone(sel_vars, slice(None))
-        self.sel_steps = ifnone(sel_steps,slice(None))
-        self.tls = L(tls if tls else [TfmdLists(item, t, **kwargs) for item,t in zip(items,self.tfms)])
-        self.n_inp = (1 if len(self.tls)==1 else len(self.tls)-1) if n_inp is None else n_inp
-        if len(self.tls[0]) > 0:
-            self.ptls = L([tl if not self.inplace else tl[:] if type(tl[0]).__name__ == 'memmap' else tensor(tl[:]) for tl in self.tls])
-            self.types = [ifnone(_typ, type(tl[0]) if isinstance(tl[0], torch.Tensor) else tensor) for tl,_typ in zip(self.tls, [self._xtype, self._ytype])]
-
-    def __getitem__(self, it):
-        return tuple([typ(ptl[it])[...,self.sel_vars, self.sel_steps] if i==0 else typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
-
-    def subset(self, i): return type(self)(tls=L(tl.subset(i) for tl in self.tls), n_inp=self.n_inp,
-                                           inplace=self.inplace, tfms=self.tfms, sel_vars=self.sel_vars, sel_steps=self.sel_steps)
-    @property
-    def vars(self): return self[0][0].shape[-2]
-    @property
-    def len(self): return self[0][0].shape[-1]
-
-# Cell
-#tsai.data.core
-## slightly adapted version
-##NOTE TODO: Why does _ytype=TensorFloat not work (autograd fails)
-class TSDatasets2(NumpyDatasets):
-    "A dataset that creates tuples from X (and y) and applies `item_tfms`"
-    _xtype, _xdistype, _ytype = TSTensor, TSIntTensor, None # Expected X and y output types (torch.Tensor - default - or subclass)
-    def __init__(self, X=None, X_dis=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
-                 inplace=True, **kwargs):
-        self.inplace = inplace
-        if tls is None:
-            X = itemify(to3darray(X), tup_id=0)
-            X_dis = itemify(to3darray(X_dis), tup_id=0) if X_dis is not None else X_dis
-            y = itemify(y, tup_id=0) if y is not None else y
-            items = tuple((X,)) if y is None else tuple((X,y))
-            if X_dis is not None: items = tuple((X, X_dis, y)) if y is not None else tuple(X, X_dis,)
-            self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))
-
-#         if X_dis is not None: self.X_dis = X_dis
-
-        self.sel_vars = ifnone(sel_vars, slice(None))
-        self.sel_steps = ifnone(sel_steps,slice(None))
-        self.tls = L(tls if tls else [TfmdLists(item, t, **kwargs) for item,t in zip(items,self.tfms)])
-        self.n_inp = (1 if len(self.tls)==1 else len(self.tls)-1) if n_inp is None else n_inp
-        if len(self.tls[0]) > 0:
-            _tls_types = [self._xtype, self._ytype] if len(self.tls)==2 else [self._xtype, self._xdistype, self._ytype]
-            print(_tls_types)
-#             print(len(self.tls))
-#             for tl,_typ in zip(self.tls, _tls_types):
-#                 print (len(tl), _typ, type(tl[0]), isinstance(tl[0], torch.Tensor))
-            self.types = L([ifnone(_typ, type(tl[0]) if isinstance(tl[0], torch.Tensor) else tensor) for
-                            tl,_typ in zip(self.tls, _tls_types)])
-            self.ptls = L([tl if not self.inplace else tl[:] if type(tl[0]).__name__ == 'memmap' else
-                           tensor(stack(tl[:])) for tl in self.tls])
-
-    def __getitem__(self, it):
-
-#         for i,(ptl,typ) in enumerate(zip(self.ptls,self.types)):
-#             print (i, typ)
-
-#         return tuple([typ(ptl[it])[...,self.sel_vars, self.sel_steps] if i==0 else
-#                       typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
-        ## do not enable slicing for now
-        return tuple([typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
-
-
-    def subset(self, i): return type(self)(tls=L(tl.subset(i) for tl in self.tls), n_inp=self.n_inp,
-                                           inplace=self.inplace, tfms=self.tfms,
-                                           sel_vars=self.sel_vars, sel_steps=self.sel_steps)
-    @property
-    def vars(self): return self[0][0].shape[-2]
-    @property
-    def len(self): return self[0][0].shape[-1]
-
-
-# Cell
-#tsai.data.core
 ## slightly adapted version
 ##NOTE TODO: Why does _ytype=TensorFloat not work (autograd fails)
 class TSDatasets3(NumpyDatasets):
@@ -538,7 +450,8 @@ class NumpyDataLoaders(DataLoaders):
         return cls.from_dblock(dblock, source, **kwargs)
 
     @classmethod
-    def from_dsets(cls, *ds, path='.', bs=64, num_workers=0, batch_tfms=None, device=None, shuffle_train=True, **kwargs):
+    def from_dsets(cls, *ds, path='.', bs=64, num_workers=0, batch_tfms=None, device=None,
+                   shuffle_train=True, **kwargs):
         default = (shuffle_train,) + (False,) * (len(ds)-1)
         defaults = {'shuffle': default, 'drop_last': default}
         kwargs = merge(defaults, {k: tuplify(v, match=ds) for k,v in kwargs.items()})
@@ -554,11 +467,11 @@ class TSDataLoaders(NumpyDataLoaders):
     _dl_type = TSDataLoader
 
 # Cell
-#tsai.data.transform
+#tsai.data.transform, slightly modified for optional discrete channels
 class TSStandardize(Transform):
     "Standardize/destd batch of `NumpyTensor` or `TSTensor`"
     parameters, order = L('mean', 'std'), 99
-    def __init__(self, mean=None, std=None, by_sample=False, by_var=False, verbose=False):
+    def __init__(self, mean=None, std=None, by_sample=False, by_var=False, verbose=False, discrete=False):
         self.mean = tensor(mean) if mean is not None else None
         self.std = tensor(std) if std is not None else None
         self.by_sample, self.by_var = by_sample, by_var
@@ -567,6 +480,7 @@ class TSStandardize(Transform):
         elif by_var: self.axes = (0, 2)
         else: self.axes = ()
         self.verbose = verbose
+        self.discrete=discrete
 
     @classmethod
     def from_stats(cls, mean, std): return cls(mean, std)
@@ -575,12 +489,20 @@ class TSStandardize(Transform):
         if self.mean is None or self.std is None:
             pv(f'{self.__class__.__name__} setup mean={self.mean}, std={self.std}, by_sample={self.by_sample}, by_var={self.by_var}', self.verbose)
 #             x, *_ = dl.one_batch() ##??
-            x = dl.ptls[0] ## modification
-            self.mean, self.std = x.mean(self.axes, keepdim=self.axes!=()), x.std(self.axes, keepdim=self.axes!=()) + 1e-7
+            assert not self.discrete or len(dl.ptls)==3
+            x = dl.ptls[0] if not self.discrete else dl.ptls[1]## modification
+            self.mean, self.std = x.float().mean(self.axes, keepdim=self.axes!=()), x.float().std(self.axes, keepdim=self.axes!=()) + 1e-7
             pv(f'mean: {self.mean}  std: {self.std}\n', self.verbose)
 
     def encodes(self, x:(NumpyTensor, TSTensor)):
-        pv('standardize encodes', self.verbose)
+        if self.discrete: return x
+        pv('standardize cont encodes', self.verbose)
+        if self.by_sample: self.mean, self.std = x.mean(self.axes, keepdim=self.axes!=()), x.std(self.axes, keepdim=self.axes!=()) + 1e-7
+        return (x - self.mean) / self.std
+
+    def encodes(self, x:(TSIntTensor)):
+        if not self.discrete: return x
+        pv('standardize int encodes', self.verbose)
         if self.by_sample: self.mean, self.std = x.mean(self.axes, keepdim=self.axes!=()), x.std(self.axes, keepdim=self.axes!=()) + 1e-7
         return (x - self.mean) / self.std
 
@@ -637,9 +559,3 @@ def items_to_arrays(items):
     '''convert list of item tuples into X,y numpy arrays (for use with numpy dataloader)'''
 #     return np.stack([x[0] for x in items]), np.stack([x[1] for x in items])
     return tuple(np.stack([x[i] for x in items]) for i in range(len(items[0])))
-
-# Cell
-def TSSplitter(train_perc=0.8):
-    def _inner(o, **kwargs):
-        return L(range(0, int(len(o)*train_perc))), L(range(int(len(o)*train_perc), len(o)))
-    return _inner

@@ -45,24 +45,27 @@ data_params = defaultdict(lambda:None, {'df_fn':df_fn, 'df_dir':df_dir, 'df_path
 
 # Cell
 def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets3, shuffle_train=True,
-           verbose=False):
+           verbose=False, ss_dis=True):
     '''
     create dataloaders
+    handling of discrete channels with cols_d and ss_dis
     '''
-    if cols_d is not None:
-        items, _ = df_to_items_discrete(df, [cols_c, cols_d], cols_y, n_train)
-    else:
-        items, _ = df_to_items(df, cols_c, cols_y, n_train)
 
+    items, n_train = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d)
     if cols_d: Xc,Xd,y = items_to_arrays(items)
     else: (Xc,y), Xd = items_to_arrays(items), None
+
     print(ds_type)
     dsets = ds_type(X=Xc, X_dis=Xd, y=y, splits=splits)
     print(dsets.n_subsets)
-    ss = TSStandardize(by_var=True, verbose=verbose)
+
+    ##standardization: continuous channels always, discrete channels optional
+    batch_tfms=listify(TSStandardize(by_var=True, verbose=verbose))
+    if cols_d and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
 #     augmix = AugmixSS()
+#     print(batch_tfms)
     ds = [dsets.subset(i) for i in range(dsets.n_subsets)]
-    dls = TSDataLoaders.from_dsets(*ds, bs=[bs]+[bs]*len(splits), batch_tfms=[ss], shuffle_train=shuffle_train)
+    dls = TSDataLoaders.from_dsets(*ds, bs=[bs]+[bs]*len(splits), batch_tfms=batch_tfms, shuffle_train=shuffle_train)
 #     dls = TSDataLoaders.from_dsets(dsets.train, bs=[128,128])
     dls.n_channels = len(cols_c) + len(listify(cols_d))
     dls.n_targets = len(listify(cols_y))
@@ -236,7 +239,7 @@ class TSExperiments:
         self.data_params=data_params
         self.df_base = pd.read_csv(data_params['df_path'], nrows=data_params['nrows'])
         #get continuous, discrete, and dependent columns
-        cols_c, cols_d, cols_y, splits = map(data_params.get, ['cols_c', 'cols_d', 'cols_y', 'splits'])
+        cols_c, cols_d, cols_y, splits, ss_dis = map(data_params.get, ['cols_c', 'cols_d', 'cols_y', 'splits', 'ss_dis'])
         #get splits
 #         print(splits, callable(splits))
         self.splits = splits(self.df_base) if callable(splits) else splits
@@ -244,7 +247,8 @@ class TSExperiments:
 
         self.bs = data_params['bs']
         self.ds_id = _get_ds_id(data_params, self.splits)
-        self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs)
+        self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
+                           ss_dis=ss_dis)
 
 
     def setup_training(self, train_params):
@@ -363,7 +367,7 @@ class TSExperiments:
 
 # Cell
 def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitter_fn=TSSplitter(),
-                      col_config=None, col_fn=None, bs=64, nrows=None):
+                      col_config=None, col_fn=None, bs=64, nrows=None, ss_dis=True):
 #     assert col_config or col_fn, 'need to pass either cont. cols and y cols, or a col_fn'
 
     assert col_config, 'need to pass columns configuration'
@@ -380,7 +384,7 @@ def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitt
 
     data_params = defaultdict(lambda:None, {'df_path':df_path, 'splits':splits, 'col_config_id':cols_config_id,
                                             'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y,
-                                             'bs':bs,  'nrows':nrows})
+                                             'bs':bs,  'nrows':nrows, 'ss_dis':ss_dis})
 #                'ds_full_path':ds_full_path,
                  #'dataset_name':dataset_id,
 
