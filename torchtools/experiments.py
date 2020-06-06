@@ -51,7 +51,7 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets3,
     handling of discrete channels with cols_d and ss_dis
     '''
 
-    items, n_train = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d)
+    items = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d)
     if cols_d: Xc,Xd,y = items_to_arrays(items)
     else: (Xc,y), Xd = items_to_arrays(items), None
 
@@ -303,7 +303,8 @@ class TSExperiments:
         if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='augmix':
-            augs=AugmixSS(N=N, magnitude=magnitude, verbose=verbose)
+            _augmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
+            augs=_augmixtype(N=N, magnitude=magnitude, verbose=verbose)
             print(f'augmix order {augs.order}')
         else: augs=None
         print(augs is None)
