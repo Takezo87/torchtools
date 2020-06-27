@@ -2,7 +2,7 @@
 
 __all__ = ['To3dArray', 'ToArray', 'decompress_from_url', 'get_UCR_univariate_list', 'get_UCR_multivariate_list',
            'get_UCR_univariate', 'get_UCR_multivariate', 'get_UCR_data', 'ucr_to_items', 'get_simple_config',
-           'items_from_df']
+           'items_from_df', 'items_from_df', 'cats_from_df']
 
 # Cell
 from .data import *
@@ -296,8 +296,9 @@ def _fillna(x, values):
     if np.ndim(values)==0: np.nan_to_num(x, copy=False, nan=0)
 
     else:
-        assert x.shape[-2]==values.shape[0]
-        for i,v in enumerate(values): np.nan_to_num(x[:,i,:], copy=False, nan=v)
+        #print(x.shape, values.shape)
+#         assert x.shape[0]==values.shape[0]
+        for i,v in enumerate(values): np.nan_to_num(x[:,i,...], copy=False, nan=v)
 
 # Cell
 def _normalize(x, means, stds):
@@ -333,3 +334,55 @@ def items_from_df(df, cols_c, cols_y, n_train, cols_d=None):
         return list(zip(x, xd.astype(np.int16), y))
 
     return list(zip(x,y))
+
+# Cell
+def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None):
+    '''
+    creates timeseries items from a dataframe
+
+    parameters:
+    df: input dataframe
+    cols_c: list of lists of columns for continuous valued channels (one list for each channel)
+    cols_d: (optional) list of lists of columns for discrete valued channels
+    cols_y: (list or single value) target column(s)
+    n_train: int, neeeds to be provided for calculating the stats that are necessary to fill missing values
+    tab_cols_c: (list or single value) tabular continunous columns
+
+    return a list of (xc,(xd),y) tuples (one list element for each dataframe row)
+    '''
+
+    cols_x = [cols_c]+[cols for cols in [cols_d, tab_cols_c]]
+    _types = [np.float32, np.int16, np.float32]
+#     print(cols_x)
+    xs=[]
+    for cols,t in zip(cols_x, _types):
+        if cols is not None:
+            x=_get_x(df, cols, dtype=t)
+            axis=(0,2) if is_listy(cols[0]) else (0)
+            means,stds,medians =  _calc_stats(x, n_train, axis=axis)
+            _fillna(x, means)
+            assert not np.isnan(x).any()
+            xs.append(x)
+
+    y =  _get_y(df, cols_y)
+#     return xs,y
+    return list(zip(*xs, y))
+
+# Cell
+def _apply_cats(voc, add, c):
+    if not is_categorical_dtype(c):
+        return pd.Categorical(c, categories=voc[c.name][add:]).codes+add
+    return c.cat.codes+add #if is_categorical_dtype(c) else c.map(voc[c.name].o2i)
+
+def cats_from_df(df, tab_cols_cat, n_train):
+    '''
+    extract category codes for categorical columns from df, create 'na'
+
+    parameters:
+    df: input dataframe
+    tab_cols_cat: list of categorical column names
+    n_train: categories taken from df.iloc[:n_train] applied to df.iloc[n_train:]
+    '''
+    cat_maps = {c:CategoryMap(df[c].iloc[:n_train], add_na=True) for c in tab_cols_cat}  ## setup
+    return np.stack([partial(_apply_cats,cat_maps,1)(df[c]) for c in tab_cols_cat], axis=1), cat_maps
+#     return np.stack([pd.Cate])
