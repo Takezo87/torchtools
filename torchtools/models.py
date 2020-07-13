@@ -225,7 +225,7 @@ class InceptionTimeD_Mixed(nn.Module):
 
         xs_mask = [self.n_c>0, self.n_d>0, self.n_cont>0, len(self.emb_szs)>0]
 #         x_type_idxs = [i for i in range(4) if has_x[i]]
-        xc,xd,xt,xcat = _map_xs(xs, xs_mask)
+        xc,xd,xt,xcat = map_xs(xs, xs_mask)
 
         x_ts=xc.float()
         if xd is not None: x_ts = torch.cat([x_ts, xd.float()], dim=-2)

@@ -356,7 +356,7 @@ class TSDatasets4(NumpyDatasets):
         self.has_xtype=[X is not None, X_dis is not None, X_tabc is not None, X_tabcat is not None]
 
         if tls is None:
-            X = itemify(to3darray(X), tup_id=0)
+            X = itemify(to3darray(X), tup_id=0) if X is not None else X
             X_dis = itemify(to3darray(X_dis), tup_id=0) if X_dis is not None else X_dis
             X_tabc = itemify(toarray(X_tabc), tup_id=0) if X_tabc is not None else X_tabc
             X_tabcat = itemify(toarray(X_tabcat), tup_id=0) if X_tabcat is not None else X_tabcat
