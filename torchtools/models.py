@@ -5,6 +5,9 @@ __all__ = ['noop', 'shortcut', 'Inception', 'InceptionBlock', 'InceptionTime', '
            'nll_regression', 'nll_leaky_loss', 'qd_loss', 'InceptionTimeBounds']
 
 # Cell
+from .core import *
+
+# Cell
 import torch.nn as nn
 import torch as torch
 import torch.nn.functional as F
