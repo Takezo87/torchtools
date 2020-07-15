@@ -50,7 +50,6 @@ def emb_sz_rule(n_cat):
     "Rule of thumb to pick embedding size corresponding to `n_cat`"
     return min(600, round(1.6 * n_cat**0.56))
 
-# Cell
 def _one_emb_sz(classes, n, sz_dict=None):
     "Pick an embedding size for `n` depending on `classes` if not given in `sz_dict`."
     sz_dict = ifnone(sz_dict, {})
@@ -58,7 +57,6 @@ def _one_emb_sz(classes, n, sz_dict=None):
     sz = sz_dict.get(n, int(emb_sz_rule(n_cat)))  # rule of thumb
     return n_cat,sz
 
-# Cell
 def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
@@ -68,7 +66,7 @@ def get_mod(dls, arch='inception'):
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
-        return TabNetModel(emb_szs=emb_szs, n_cont=len(dls.cols_cont), out_sz=64)
+        return TabNetTT(emb_szs=emb_szs, n_cont=len(dls.cols_cont), out_sz=dls.n_targets)
 
     if dls.cols_cat is not None or dls.cols_cont is not None:
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
@@ -109,8 +107,9 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
     print(dsets.n_subsets)
 
     ##standardization: continuous channels always, discrete channels optional
-    batch_tfms=listify(TSStandardize(by_var=True, verbose=verbose))
-    if cols_d and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
+    batch_tfms=[]
+    if cols_d is not None: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
+    if cols_d is not None and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
 #     augmix = AugmixSS()
 #     print(batch_tfms)
 #     return dsets
