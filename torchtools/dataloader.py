@@ -3,9 +3,9 @@
 __all__ = ['cpus', 'device', 'bytes2GB', 'totensor', 'toarray', 'to3dtensor', 'to2dtensor', 'to1dtensor', 'to3darray',
            'to2darray', 'to1darray', 'to3d', 'to2d', 'to1d', 'to2dPlus', 'to3dPlus', 'to2dPlusTensor', 'to2dPlusArray',
            'to3dPlusTensor', 'to3dPlusArray', 'Todtype', 'itemify', 'ifnoneelse', 'cycle_dl', 'stack', 'NumpyTensor',
-           'NumpyDatasets', 'TSDatasets3', 'TSDatasets4', 'NumpyTensorBlock', 'TSTensorBlock', 'NumpyDataLoader',
-           'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize', 'TSNormalize',
-           'items_to_arrays']
+           'NumpyDatasets', 'TSDatasets3', 'TSDatasets4', 'TSDatasets5', 'NumpyTensorBlock', 'TSTensorBlock',
+           'NumpyDataLoader', 'show_tuple', 'TSDataLoader', 'NumpyDataLoaders', 'TSDataLoaders', 'TSStandardize',
+           'TSNormalize', 'items_to_arrays']
 
 # Cell
 import numpy as np
@@ -439,6 +439,89 @@ class TSDatasets4(NumpyDatasets):
             res = type(self)(X=X, X_dis=X_dis, X_tabc=X_tabc, X_tabcat=X_tabcat, y=y, n_inp=self.n_inp,
                                            inplace=self.inplace, tfms=self.tfms,
                                            sel_vars=self.sel_vars, sel_steps=self.sel_steps)
+            res.set_split_idx_fixed(i)
+            return res
+
+
+        else:
+            return type(self)(tls=L(tl.subset(i) for tl in self.tls), n_inp=self.n_inp,
+                                           inplace=self.inplace, tfms=self.tfms,
+                                           sel_vars=self.sel_vars, sel_steps=self.sel_steps)
+    @property
+    def vars(self): return self[0][0].shape[-2]
+    @property
+    def len(self): return self[0][0].shape[-1]
+
+    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    def set_split_idx_fixed(self, i):
+        for tl in self.tls: tl.tfms.split_idx = i
+
+# Cell
+#tsai.data.core
+## adapted version
+
+##Note: For this version of Datasets, item transforms are not propagated, transformed lists more or less pointless?? It is much faster though
+
+class TSDatasets5(NumpyDatasets):
+    "A dataset that creates tuples from X (and y) and applies `item_tfms`"
+    _xctype, _xdtype, _xtconttype, _xtcattype, _ytype = TSTensor, TSIntTensor, None, None, None # Expected X and y output types (torch.Tensor - default - or subclass)
+    def __init__(self, X_c=None, X_d=None, y=None, items=None, tfms=None, tls=None, n_inp=None, dl_type=None,
+                 inplace=True, X_tcont=None, X_tcat=None, has_x=None, _ytype=None, **kwargs):
+        self.inplace = inplace ## should be always True for this implementation
+        self._ytype = _ytype
+        self.has_x = ifnone(has_x, [X_c is not None, X_d is not None,
+                                            X_tcont is not None, X_tcat is not None])
+
+        if tls is None: ## always None in this implementation
+            X_c = itemify(to3darray(X_c), tup_id=0) if X_c is not None else X_c
+            X_d = itemify(to3darray(X_d), tup_id=0) if X_d is not None else X_d
+            X_tcont = itemify(toarray(X_tcont), tup_id=0) if X_tcont is not None else X_tcont
+            X_tcat = itemify(toarray(X_tcat), tup_id=0) if X_tcat is not None else X_tcat
+            #toarray(y) only needed if y-elements are not scalars, toarray is time consuming
+            y = itemify(toarray(y), tup_id=0) if y is not None else y
+            items = tuple((X_c,)) if y is None else tuple(x for x in [X_c, X_d, X_tcont, X_tcat, y]
+                                                          if x is not None)
+            self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))
+
+        self.tls = L(tls if tls else [TfmdLists(item, t, **kwargs) for item,t in zip(items,self.tfms)])
+        self.n_inp = (1 if len(self.tls)==1 else len(self.tls)-1) if n_inp is None else n_inp
+        if len(self.tls[0]) > 0:
+#             print(_xtype)
+            _tls_types=L([self._xctype, self._xdtype, self._xtconttype, self._xtcattype])[self.has_x]+L([self._ytype])
+#             _tls_types=[t for x,t in zip(self.has_x, [self._xctype, self._xdtype, self._xtconttype, self._xtcattype, self._ytype])
+#                         if x]
+            print(_tls_types)
+
+            self.types = [ifnone(_typ, type(tl[0]) if isinstance(tl[0], torch.Tensor) else tensor) for
+                            tl,_typ in zip(self.tls, _tls_types)]
+
+            if self.inplace:
+                print('fast part')
+                self.ptls=L([tensor(x) for x in [X_c, X_d, X_tcont, X_tcat,y] if x is not None])
+            else:
+        #this part should never be called in this implementation, observe that the item transforms
+        #in the original fastai2 datasets are applied by slicing into the TfmdLists
+                print('slow part')
+                self.ptls = L([tl if not self.inplace else tl[:] if type(tl[0]).__name__ == 'memmap' else
+                               tensor(stack(tl[:])) for tl in self.tls])
+
+    def __getitem__(self, it):
+        return tuple([typ(ptl[it]) for i,(ptl,typ) in enumerate(zip(self.ptls,self.types))])
+
+#     @property
+    def subset(self, i):
+#         return type(self)(tls=L(tl.subset(i) for tl in self.tls), n_inp=self.n_inp,
+#                                            inplace=self.inplace, tfms=self.tfms,
+#                                            sel_vars=self.sel_vars, sel_steps=self.sel_steps,
+#                           has_xtype=self.has_xtype)
+        if self.inplace:
+            Xs = [x[self.splits[i]] for x in self.ptls[:-1]]
+            X_c,X_d,X_tcont,X_tcat = map_xs(Xs, self.has_x)
+            y = np.array(self.ptls[-1][self.splits[i]])
+
+            #if X_dis:print(X.shape, y.shape, X_dis.shape)
+            res = type(self)(X_c=X_c, X_d=X_d, X_tcont=X_tcont, X_tcat=X_tcat, y=y, n_inp=self.n_inp,
+                                           inplace=self.inplace, tfms=self.tfms, _ytype=self._ytype)
             res.set_split_idx_fixed(i)
             return res
 

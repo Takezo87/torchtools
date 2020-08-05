@@ -62,6 +62,8 @@ def get_emb_sz(to, sz_dict=None):
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
 def get_mod(dls, arch='inception'):
+    if getattr(dls, 'y_vocab', None) is not None:
+        return InceptionTime(dls.n_channels, len(dls.y_vocab[list(dls.y_vocab.keys())[0]]))
 
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
@@ -73,14 +75,14 @@ def get_mod(dls, arch='inception'):
         return InceptionTimeD_Mixed(dls.n_channels_c, dls.n_channels_d, dls.n_targets,
                                     len(dls.cols_cont), emb_szs=emb_szs)
     else:
-        if dls.dataset.has_xtype[1]: ##discrete channels
+        if dls.dataset.has_x[1]: ##discrete channels
             return InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
             return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
 # Cell
 def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4, shuffle_train=True,
-           verbose=False, ss_dis=True, cols_cont=None, cols_cat=None):
+           verbose=False, ss_dis=True, cols_cont=None, cols_cat=None, classification=False):
     '''
     create dataloaders
     handling of discrete channels with cols_d and ss_dis
@@ -92,18 +94,20 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
     has_col=[cols_c is not None, cols_d is not None, cols_cont is not None]
     Xc, Xd, X_conts = map_xs(ars[:-1], has_col)
 
-    y=ars[-1]
-    #Xd=None if cols_d is None else ars[1]
-    #X_conts=None if cols_cont is None else ars[1] if cols_d is None else ars[2]
+    y=ars[-1].astype(np.float)
+    if classification:
+        y, y_vocab = cats_from_df(df, listify(cols_y), len(splits[0]))
+        y=y.squeeze()
+        y=y.astype(np.long)
 
-#     if cols_d: Xc,Xd,y = items_to_arrays(items)
-#     else: (Xc,y), Xd = items_to_arrays(items), None
     if cols_cat is not None:
         X_cats, cat_maps = cats_from_df(df, cols_cat, len(splits[0]))
     else: X_cats, cat_maps = None, None
 
+    _ytype=TensorCategory if classification else TensorFloat
     print(ds_type)
-    dsets = ds_type(X=Xc, X_dis=Xd, y=y, splits=splits, X_tabc=X_conts, X_tabcat=X_cats)
+    dsets = ds_type(X_c=Xc, X_d=Xd, y=y, splits=splits, X_tcont=X_conts, X_tcat=X_cats, _ytype=_ytype)
+#     dsets = ds_type(X=Xc, X_dis=Xd, y=y, splits=splits, X_tabc=X_conts, X_tabcat=X_cats, _ytype=_ytype)
     print(dsets.n_subsets)
 
     ##standardization: continuous channels always, discrete channels optional
@@ -126,6 +130,9 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
     dls.cols_cat, dls.cols_cont = cols_cat, cols_cont
     if cols_cat is not None:
         dls.voc=cat_maps
+    if classification:
+        dls.y_vocab=y_vocab
+    dls.classification = True if classification else False
     ##ToDO: for mixed input, store category info in dl
 
     return dls
@@ -165,7 +172,7 @@ def run_training(dls, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
         N=N, magnitude=magnitude, verbose=True)
 #     augs  = Augmix(verbose=True)
     dls.after_batch.add(augs)
-    loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
+    loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not dls.classification else CrossEntropyLossFlat()
     print(loss_fn)
 
     learn = Learner(dls, model, loss_func=loss_fn, metrics=metrics)
@@ -266,7 +273,7 @@ def _get_model_fn(prefix='model'):
 
 # Cell
 def _id_from_splits(splits):
-    return '_'.join([str(l[-1]+1//1000) for l in splits])
+    return '_'.join([(str((l[-1]+1)//1000)) for l in splits])
 
 def _get_ds_id(data_params, splits):
     return f"{data_params['df_path'].stem}_{data_params['col_config_id']}_{_id_from_splits(splits)}"
@@ -304,14 +311,16 @@ class TSExperiments:
         #get splits
 #         print(splits, callable(splits))
         self.splits = splits(self.df_base) if callable(splits) else splits
-#         print(splits)
+#         print(self.splits)
 
         self.bs = data_params['bs']
         self.ds_id = _get_ds_id(data_params, self.splits)
+        self.classification = data_params.get('classification', False)
 #         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
 #                            ss_dis=ss_dis)
         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
-                           ss_dis=ss_dis, cols_cont=cols_cont, cols_cat=cols_cat, ds_type=TSDatasets4)
+                           ss_dis=ss_dis, cols_cont=cols_cont, cols_cat=cols_cat, ds_type=TSDatasets5,
+                          classification=self.classification)
 
 
     def setup_training(self, train_params):
@@ -377,7 +386,8 @@ class TSExperiments:
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')
 
-        loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
+#         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
+        loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not self.dls.classification else CrossEntropyLossFlat()
         print(loss_fn)
 
 
@@ -432,7 +442,7 @@ class TSExperiments:
 
 # Cell
 def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitter_fn=TSSplitter(),
-                      col_config=None, col_fn=None, bs=64, nrows=None, ss_dis=True):
+                      col_config=None, col_fn=None, bs=64, nrows=None, ss_dis=True, classification=False):
 #     assert col_config or col_fn, 'need to pass either cont. cols and y cols, or a col_fn'
 
     assert col_config, 'need to pass columns configuration'
@@ -450,7 +460,8 @@ def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitt
 
     data_params = defaultdict(lambda:None, {'df_path':df_path, 'splits':splits, 'col_config_id':cols_config_id,
                                             'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y, 'cols_cont':cols_cont,
-                                             'cols_cat':cols_cat, 'bs':bs,  'nrows':nrows, 'ss_dis':ss_dis})
+                                             'cols_cat':cols_cat, 'bs':bs,  'nrows':nrows, 'ss_dis':ss_dis,
+                                           'classification':classification})
 #                'ds_full_path':ds_full_path,
                  #'dataset_name':dataset_id,
 
