@@ -62,17 +62,22 @@ def get_emb_sz(to, sz_dict=None):
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
 def get_mod(dls, arch='inception'):
-    if getattr(dls, 'y_vocab', None) is not None:
-        return InceptionTime(dls.n_channels, len(dls.y_vocab[list(dls.y_vocab.keys())[0]]))
+    if dls.classification and not dls.mixed:
+        return InceptionTime(dls.n_channels, dls.c)
 
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
         return TabNetTT(emb_szs=emb_szs, n_cont=len(dls.cols_cont), out_sz=dls.n_targets)
 
-    if dls.cols_cat is not None or dls.cols_cont is not None:
+    if dls.mixed:
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
-        return InceptionTimeD_Mixed(dls.n_channels_c, dls.n_channels_d, dls.n_targets,
+
+        if dls.classification:
+             return InceptionTime_Mixed(dls.n_channels_c, dls.n_channels_d, dls.c,
+                                    len(dls.cols_cont), emb_szs=emb_szs)
+        else:
+            return InceptionTimeD_Mixed(dls.n_channels_c, dls.n_channels_d, dls.n_targets,
                                     len(dls.cols_cont), emb_szs=emb_szs)
     else:
         if dls.dataset.has_x[1]: ##discrete channels
@@ -130,8 +135,12 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
     dls.cols_cat, dls.cols_cont = cols_cat, cols_cont
     if cols_cat is not None:
         dls.voc=cat_maps
+
+    dls.mixed = dls.cols_cat is not None or dls.cols_cont is not None
+
     if classification:
         dls.y_vocab=y_vocab
+        dls.c = len(dls.y_vocab[list(dls.y_vocab.keys())[0]])
     dls.classification = True if classification else False
     ##ToDO: for mixed input, store category info in dl
 

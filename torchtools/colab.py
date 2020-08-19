@@ -3,7 +3,6 @@
 __all__ = ['ISCOLAB']
 
 # Cell
-import sys
 ISCOLAB = 'google.colab' in sys.modules
 if ISCOLAB:
     # uncomment for bleeding edge
