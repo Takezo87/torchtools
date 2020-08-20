@@ -314,17 +314,30 @@ class TSExperiments:
         #read in dataframe
         self.data_params=data_params
         self.df_base = pd.read_csv(data_params['df_path'], nrows=data_params['nrows'])
+
         #get continuous, discrete, and dependent columns
         cols_c, cols_d, cols_y, splits, ss_dis = map(data_params.get, ['cols_c', 'cols_d', 'cols_y', 'splits', 'ss_dis'])
         cols_cat, cols_cont= map(data_params.get, ['cols_cat', 'cols_cont']) ## tabular data
+
+        prune = data_params.get('prune', None)
+        if prune is not None:
+            assert prune in ['hcodds_col', 'overodds_col']
+            prune_col = data_params.get(prune)
+            print(prune_col)
+            assert prune_col is not None, 'prune value has to be a valid columns'
+            self.df_base.drop(self.df_base[self.df_base[prune_col]<=1].index, inplace=True)
+            self.df_base.reset_index(inplace=True, drop=True)
+
         #get splits
 #         print(splits, callable(splits))
         self.splits = splits(self.df_base) if callable(splits) else splits
 #         print(self.splits)
 
+        ##store some of the data parameters for later use
         self.bs = data_params['bs']
         self.ds_id = _get_ds_id(data_params, self.splits)
         self.classification = data_params.get('classification', False)
+        self.prune = prune
 #         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
 #                            ss_dis=ss_dis)
         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
@@ -337,6 +350,11 @@ class TSExperiments:
         self.train_params = train_params
         self.train_params['bs']=self.bs
         self.train_params['ds_id'] = self.ds_id
+        self.train_params['classification'] = self.classification
+        self.train_params['prune'] = self.prune
+
+        if self.train_params['classification']:
+            assert self.train_params['loss_fn_name'] == "CrossEntropy"
 
 
     def _save_preds(self, test=False):
@@ -462,15 +480,15 @@ def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitt
     else:
         splits = splitter_fn
 
-    cols_c, cols_d, cols_y, cols_config_id, cols_cont, cols_cat = map(
-        col_config.get, ['cols_c', 'cols_d', 'cols_y', 'id', 'cols_cont', 'cols_cat'])
+    cols_c, cols_d, cols_y, cols_config_id, cols_cont, cols_cat, prune, hcodds_col = map(
+        col_config.get, ['cols_c', 'cols_d', 'cols_y', 'id', 'cols_cont', 'cols_cat', 'prune', 'hcodds_col'])
 
 #     dataset_name = f'{df
 
     data_params = defaultdict(lambda:None, {'df_path':df_path, 'splits':splits, 'col_config_id':cols_config_id,
                                             'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y, 'cols_cont':cols_cont,
-                                             'cols_cat':cols_cat, 'bs':bs,  'nrows':nrows, 'ss_dis':ss_dis,
-                                           'classification':classification})
+                                             'cols_cat':cols_cat, 'hcodds_col': hcodds_col, 'bs':bs, 'prune':prune,
+                                            'nrows':nrows, 'ss_dis':ss_dis,'classification':classification})
 #                'ds_full_path':ds_full_path,
                  #'dataset_name':dataset_id,
 
