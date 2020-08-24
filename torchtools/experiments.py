@@ -21,6 +21,7 @@ import pandas as pd
 import numpy as np
 from fastai2.basics import *
 from fast_tabnet.core import *
+from fastscript import *
 
 # Cell
 ## data config
@@ -117,8 +118,9 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
 
     ##standardization: continuous channels always, discrete channels optional
     batch_tfms=[]
-    if cols_d is not None: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
-    if cols_d is not None and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
+    print(has_col)
+    if has_col[0]: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
+    if has_col[1] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
 #     augmix = AugmixSS()
 #     print(batch_tfms)
 #     return dsets

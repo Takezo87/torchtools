@@ -688,6 +688,7 @@ class TSStandardize(Transform):
 #             x, *_ = dl.one_batch() ##??
 #             assert not self.discrete or len(dl.ptls)==3
             x = dl.ptls[0] if not self.discrete else dl.ptls[1]## modification
+            print(f'setups {x.shape} {self.discrete}')
             self.mean, self.std = x.float().mean(self.axes, keepdim=self.axes!=()), x.float().std(self.axes, keepdim=self.axes!=()) + 1e-7
             pv(f'mean: {self.mean}  std: {self.std}\n', self.verbose)
 
