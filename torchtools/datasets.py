@@ -374,7 +374,7 @@ def _apply_cats(voc, add, c):
         return pd.Categorical(c, categories=voc[c.name][add:]).codes+add
     return c.cat.codes+add #if is_categorical_dtype(c) else c.map(voc[c.name].o2i)
 
-def cats_from_df(df, tab_cols_cat, n_train):
+def cats_from_df(df, tab_cols_cat, n_train, add_na=True):
     '''
     extract category codes for categorical columns from df, create 'na'
 
@@ -383,6 +383,6 @@ def cats_from_df(df, tab_cols_cat, n_train):
     tab_cols_cat: list of categorical column names
     n_train: categories taken from df.iloc[:n_train] applied to df.iloc[n_train:]
     '''
-    cat_maps = {c:CategoryMap(df[c].iloc[:n_train], add_na=True) for c in tab_cols_cat}  ## setup
+    cat_maps = {c:CategoryMap(df[c].iloc[:n_train], add_na=add_na) for c in tab_cols_cat}  ## setup
     return np.stack([partial(_apply_cats,cat_maps,1)(df[c]) for c in tab_cols_cat], axis=1), cat_maps
 #     return np.stack([pd.Cate])
