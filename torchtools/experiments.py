@@ -3,8 +3,8 @@
 __all__ = ['df_fn', 'df_dir', 'df_path', 'trn_end', 'val_end', 'test_end', 'splits', 'df_config', 'col_config',
            'df_source', 'dataset_name', 'data_params', 'emb_sz_rule', 'get_emb_sz', 'get_mod', 'get_dls',
            'run_training', 'arch', 'n_epochs', 'max_lr', 'wd', 'loss_fn_name', 'alpha', 'metrics', 'N', 'magnitude',
-           'seed', 'pct_start', 'div_factor', 'aug', 'train_params', 'get_recorder_dict', 'get_loss_fn_class',
-           'TSExperiments', 'build_data_params', 'main', 'COL_CONFIG']
+           'seed', 'pct_start', 'div_factor', 'aug', 'train_params', 'get_recorder_dict', 'TSExperiments',
+           'build_data_params', 'main', 'COL_CONFIG']
 
 # Cell
 from .core import *
@@ -119,7 +119,8 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4,
     ##standardization: continuous channels always, discrete channels optional
     batch_tfms=[]
     print(has_col)
-    if has_col[0]: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
+    ###!!!!HACK!!!!!
+    if has_col[0] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
     if has_col[1] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
 #     augmix = AugmixSS()
 #     print(batch_tfms)
@@ -180,9 +181,9 @@ def run_training(dls, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
 
     _remove_augs(dls)
     augs = RandAugment(N=N, magnitude=magnitude, verbose=True) if aug=='randaugment' else Augmix(
-        N=N, magnitude=magnitude, verbose=True)
+        N=N, magnitude=magnitude, verbose=True) if aug=='augmix' else None
 #     augs  = Augmix(verbose=True)
-    dls.after_batch.add(augs)
+    if augs: dls.after_batch.add(augs)
     loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not dls.classification else get_loss_fn
     print(loss_fn)
 
@@ -291,12 +292,6 @@ def _get_ds_id(data_params, splits):
 
 
 # Cell
-def get_loss_fn_class(loss_fn_name, weight=None):
-#     weights = tensor([1., 10., 1, .10, 1.])
-    print(f'crosse entropy weigts {weight}')
-    return CrossEntropyLossFlat() if weight is None else CrossEntropyLossFlat(weight=weight.to(device))
-
-# Cell
 class TSExperiments:
     '''
     Wrapper class for Timeseries modelling experiment
@@ -362,7 +357,7 @@ class TSExperiments:
         self.train_params['prune'] = self.prune
 
         if self.train_params['classification']:
-            assert self.train_params['loss_fn_name'] == "crossentropy"
+            assert self.train_params['loss_fn_name'] in ["crossentropy", "rww"]
 
 
     def _save_preds(self, test=False):
