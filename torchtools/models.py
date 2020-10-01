@@ -14,7 +14,7 @@ import torch.nn.functional as F
 
 from functools import partial
 
-from fastai2.layers import SigmoidRange
+from fastai.layers import SigmoidRange
 from fast_tabnet.core import *
 
 import numpy as np

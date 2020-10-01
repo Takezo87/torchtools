@@ -9,7 +9,7 @@ __all__ = ['test', 'leaky_loss', 'leaky_loss_2d', 'one_hot', 'create_rww_categor
 import torch.nn.functional as F
 import torch as torch
 from functools import partial
-from fastai2.basics import *
+from fastai.basics import *
 
 # Cell
 def test():

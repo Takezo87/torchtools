@@ -10,9 +10,9 @@ from .data import *
 # Cell
 import numpy as np
 #import torch
-from fastai2.torch_basics import *
-from fastai2.data.all import *
-from fastai2.callback.all import *
+from fastai.torch_basics import *
+from fastai.data.all import *
+from fastai.callback.all import *
 
 # Cell
 import os

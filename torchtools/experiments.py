@@ -12,14 +12,14 @@ from .data import *
 from .models import *
 from .datasets import *
 from .augmentations import *
-from .datablock import *
+#from torchtools.datablock import *
 from .dataloader import *
 from .configs import *
 
 # Cell
 import pandas as pd
 import numpy as np
-from fastai2.basics import *
+from fastai.basics import *
 from fast_tabnet.core import *
 from fastscript import *
 
@@ -87,7 +87,7 @@ def get_mod(dls, arch='inception'):
             return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
 # Cell
-def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets4, shuffle_train=True,
+def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5, shuffle_train=True,
            verbose=False, ss_dis=True, cols_cont=None, cols_cat=None, classification=False):
     '''
     create dataloaders

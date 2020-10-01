@@ -6,8 +6,8 @@ __all__ = ['plot_ts', 'TSItem', 'TSTensor', 'TensorFloat', 'plot_ts_int', 'TSInt
 import numpy as np
 import torch
 
-from fastai2.torch_basics import *
-from fastai2.data.all import *
+from fastai.torch_basics import *
+from fastai.data.all import *
 
 # Cell
 def plot_ts(x, ax=None, title=None, **kwargs):

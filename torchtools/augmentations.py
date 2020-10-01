@@ -20,8 +20,8 @@ import numpy as np
 import torch
 
 # Cell
-from fastai2.torch_basics import *
-from fastai2.data.all import *
+from fastai.torch_basics import *
+from fastai.data.all import *
 
 # Cell
 from .core import *

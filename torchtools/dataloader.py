@@ -11,16 +11,16 @@ __all__ = ['cpus', 'device', 'bytes2GB', 'totensor', 'toarray', 'to3dtensor', 't
 import numpy as np
 import scipy as sp
 #import torch
-from fastai2.torch_basics import *
-from fastai2.data.all import *
-from fastai2.callback.all import *
+from fastai.torch_basics import *
+from fastai.data.all import *
+from fastai.callback.all import *
 
-from fastai2.data.all import *
-from fastai2.basics import *
+from fastai.data.all import *
+from fastai.basics import *
 
 # Cell
 import psutil
-import fastai2
+import fastai
 import fastcore
 import torch
 
@@ -28,7 +28,7 @@ import torch
 from .data import *
 from .datasets import *
 # from torchtools.augmentations import *
-from .datablock import *
+#from torchtools.datablock import *
 
 # Cell
 from .models import *
@@ -350,19 +350,19 @@ class TSDatasets3(NumpyDatasets):
 class TSDatasets4(NumpyDatasets):
     "A dataset that creates tuples from X (and y) and applies `item_tfms`"
     _xtype, _xdistype, _xtabctype, _xtabcattype, _ytype = TSTensor, TSIntTensor, None, None, None # Expected X and y output types (torch.Tensor - default - or subclass)
-    def __init__(self, X=None, X_dis=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
-                 inplace=True, X_tabc=None, X_tabcat=None, **kwargs):
+    def __init__(self, X_c=None, X_d=None, y=None, items=None, sel_vars=None, sel_steps=None, tfms=None, tls=None, n_inp=None, dl_type=None,
+                 inplace=True, X_tcont=None, X_tcat=None, **kwargs):
         self.inplace = inplace
-        self.has_xtype=[X is not None, X_dis is not None, X_tabc is not None, X_tabcat is not None]
+        self.has_xtype=[X_c is not None, X_d is not None, X_tcont is not None, X_tcat is not None]
 
         if tls is None:
-            X = itemify(to3darray(X), tup_id=0) if X is not None else X
-            X_dis = itemify(to3darray(X_dis), tup_id=0) if X_dis is not None else X_dis
-            X_tabc = itemify(toarray(X_tabc), tup_id=0) if X_tabc is not None else X_tabc
-            X_tabcat = itemify(toarray(X_tabcat), tup_id=0) if X_tabcat is not None else X_tabcat
+            X_c = itemify(to3darray(X_c), tup_id=0) if X_c is not None else X_c
+            X_d = itemify(to3darray(X_d), tup_id=0) if X_d is not None else X_d
+            X_tcont = itemify(toarray(X_tcont), tup_id=0) if X_tcont is not None else X_tcont
+            X_tcat = itemify(toarray(X_tcat), tup_id=0) if X_tcat is not None else X_tcat
             #toarray(y) only needed if y-elements are not scalars, toarray is time consuming
             y = itemify(toarray(y), tup_id=0) if y is not None else y
-            items = tuple((X,)) if y is None else tuple(x for x in [X,X_dis, X_tabc, X_tabcat, y] if x is not None)
+            items = tuple((X_,)) if y is None else tuple(x for x in [X,X_dis, X_tabc, X_tabcat, y] if x is not None)
 #             if X_dis is not None: items = tuple((X, X_dis, y)) if y is not None else tuple(X, X_dis,)
             self.tfms = L(ifnone(tfms,[None]*len(ifnone(tls,items))))
 
