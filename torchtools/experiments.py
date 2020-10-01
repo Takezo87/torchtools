@@ -20,7 +20,7 @@ from .configs import *
 import pandas as pd
 import numpy as np
 from fastai.basics import *
-from fast_tabnet.core import *
+#from fast_tabnet.core import *
 from fastscript import *
 
 # Cell
