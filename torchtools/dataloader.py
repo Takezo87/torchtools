@@ -339,7 +339,7 @@ class TSDatasets3(NumpyDatasets):
     @property
     def len(self): return self[0][0].shape[-1]
 
-    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    ## do not confuse with set_split_idx contextmanager in fastai Datasets
     def set_split_idx_fixed(self, i):
         for tl in self.tls: tl.tfms.split_idx = i
 
@@ -452,7 +452,7 @@ class TSDatasets4(NumpyDatasets):
     @property
     def len(self): return self[0][0].shape[-1]
 
-    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    ## do not confuse with set_split_idx contextmanager in fastai Datasets
     def set_split_idx_fixed(self, i):
         for tl in self.tls: tl.tfms.split_idx = i
 
@@ -500,7 +500,7 @@ class TSDatasets5(NumpyDatasets):
                 self.ptls=L([tensor(x) for x in [X_c, X_d, X_tcont, X_tcat,y] if x is not None])
             else:
         #this part should never be called in this implementation, observe that the item transforms
-        #in the original fastai2 datasets are applied by slicing into the TfmdLists
+        #in the original fastai datasets are applied by slicing into the TfmdLists
                 print('slow part')
                 self.ptls = L([tl if not self.inplace else tl[:] if type(tl[0]).__name__ == 'memmap' else
                                tensor(stack(tl[:])) for tl in self.tls])
@@ -535,7 +535,7 @@ class TSDatasets5(NumpyDatasets):
     @property
     def len(self): return self[0][0].shape[-1]
 
-    ## do not confuse with set_split_idx contextmanager in fastai2 Datasets
+    ## do not confuse with set_split_idx contextmanager in fastai Datasets
     def set_split_idx_fixed(self, i):
         for tl in self.tls: tl.tfms.split_idx = i
 

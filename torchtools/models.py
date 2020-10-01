@@ -15,9 +15,6 @@ import torch.nn.functional as F
 from functools import partial
 
 from fastai.layers import SigmoidRange
-from fast_tabnet.core import *
-
-import numpy as np
 
 # Cell
 # This is an unofficial PyTorch implementation by Ignacio Oguiza - oguiza@gmail.com based on:

@@ -8,7 +8,7 @@ ISCOLAB = 'google.colab' in sys.modules
 if ISCOLAB:
     # uncomment for bleeding edge
     !pip install git+https://github.com/fastai/fastcore.git@master -q
-    !pip install git+https://github.com/fastai/fastai2.git@master -q
+    !pip install git+https://github.com/fastai/fastai.git@master -q
     !pip install git+https://github.com/Takezo87/torchtools.git -q
 
     # uncomment for latest stable version
@@ -32,4 +32,4 @@ from .configs import *
 #export
 import pandas as pd
 import numpy as np
-from fastai2.basics import *
+from fastai.basics import *
