@@ -166,6 +166,8 @@ class InceptionTimeD(nn.Module):
         self.mod = nn.Sequential(InceptionTime(n_in, n_out), Sigmoid(-1., 1.))
 
     def forward(self, xc, xd):
+        #cast to TensorBase for pytorch 1.7 compatibility
+        xc, xd = TensorBase(xc), TensorBase(xd)
         x = torch.cat([xc.float(), xd.float()], dim=-2)
         x = x.float()
 #         print(f'InceptionTimeSgm dtype {x.dtype}')

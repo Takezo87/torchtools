@@ -4,7 +4,7 @@ __all__ = ['df_fn', 'df_dir', 'df_path', 'trn_end', 'val_end', 'test_end', 'spli
            'df_source', 'dataset_name', 'data_params', 'emb_sz_rule', 'get_emb_sz', 'get_mod', 'get_dls',
            'run_training', 'arch', 'n_epochs', 'max_lr', 'wd', 'loss_fn_name', 'alpha', 'metrics', 'N', 'magnitude',
            'seed', 'pct_start', 'div_factor', 'aug', 'train_params', 'get_recorder_dict', 'TSExperiments',
-           'build_data_params', 'main', 'COL_CONFIG']
+           'build_data_params']
 
 # Cell
 from .core import *
@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 from fastai.basics import *
 #from fast_tabnet.core import *
-from fastscript import *
+from fastcore.script import *
 
 # Cell
 ## data config
@@ -401,14 +401,16 @@ class TSExperiments:
 
 
         _remove_augs(self.dls)
-        print(aug)
         if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='augmix':
             _augmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
             augs=_augmixtype(N=N, magnitude=magnitude, verbose=verbose)
             print(f'augmix order {augs.order}')
-        else: augs=None
+        else:
+            print(f'no augmentation with value {aug}')
+            augs=None
+        print(augs)
         print(augs is None)
         if augs:
             self.dls.after_batch.add(augs)
@@ -503,56 +505,3 @@ def _get_arch(arch:str, with_discrete=False):
     if arch.lower()=='inception': return InceptionTimeSgm if not with_discrete else InceptionTimeD
     elif arch.lower()=='resnet': return 'ResNet not implemented'
     else: return None
-
-# Cell
-from fastscript import *
-
-COL_CONFIG = 'config2.json'
-
-@call_parse
-def main(n_epochs:Param(help="n_epochs list", nargs='+', type=int)=[10],
-         max_lr:Param(help="max_lr list", nargs='+', type=float)=[1e-5],
-         wd:Param(help="wd (weight decay): hyperparameter list of floats", nargs='+', type=float)=[0.03],
-         div_factor:Param(help="div_factor hyperparameter list", nargs='+', type=float)=[25.0],
-         seed:Param(help="seed hyperparameter list", nargs='+', type=int)=[1234],
-         N:Param(help="N hyperparameter list", nargs='+', type=int)=[3],
-         magnitude:Param(help="augmentation magnitude: hyperparameter list of floats", nargs='+', type=float)=[0.3],
-         alpha:Param(help="alpha hyperparameter list", nargs='+', type=float)=[0.5],
-         aug:Param(help="augmentation policy", choices=[None, 'randaugment', 'augmix'], type=str)=None,
-         nrows:Param(help="n_epochs list", type=int)=None,
-         bs:Param(help="batch size", type=int)=128,
-         trn_end:Param(help="n_epochs list", type=int)=None,
-         val_end:Param(help="n_epochs list", type=int)=None,
-         test_end:Param(help="n_epochs list", type=int)=None,
-         df_fn:Param(help="dataframe filename", type=str)='bi_sample_anon.csv',
-         df_dir:Param(help="dataframe dir", type=str)='./data/custom',
-         df_results:Param(help="results dataframe filename", type=str)='results_script.csv',
-         config_fn:Param(help="json column configuration filename", type=str)=COL_CONFIG,
-         config_id:Param(help="column configuration id", type=str)='anon2hc_4c_2d_y',
-         arch:Param(help="model architecture", choices=['inception', 'resnet'], type=str)='inception',
-         upper:Param("Convert to uppercase?", bool_arg)=False):
-#     print(msg.upper() if upper else msg)
-
-
-
-    train_params['aug']=aug
-
-    df_path=Path(df_dir)/df_fn
-    print(df_path)
-
-    col_config=read_config(config_id, config_fn)
-    data_params = build_data_params(df_path, col_config=col_config, nrows=nrows, trn_end=trn_end, val_end=val_end,
-                                   test_end=test_end, bs=bs)
-#     print(data_params)
-
-    train_params['metrics']=[unweighted_profit, unweighted_profit_05]
-    train_params['arch']=_get_arch(arch, col_config['cols_d'] is not None)
-    ts_experiment = TSExperiments()
-    ts_experiment.setup_data(data_params)
-    ts_experiment.setup_training(train_params)
-
-    hypers = {'n_epochs': n_epochs, 'max_lr':max_lr, 'wd':wd, 'seed': seed, 'div_factor':div_factor,
-             'N':N, 'magnitude':magnitude}
-    print(hypers)
-
-    ts_experiment.run_grid_search(hypers, df_results)

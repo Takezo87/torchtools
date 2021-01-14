@@ -119,8 +119,9 @@ class EvalConfig:
     def m_cols(self):
         return metric_cols_classification if self.is_class else metric_cols
 
-
-
+    def reload_df_results(self):
+        self._df_results = pd.read_csv(self.df_results_path)
+        pre_process_results(self._df_results)
 
 # Cell
 def get_base_dir(is_colab=False):
@@ -184,6 +185,7 @@ def filt_df(df_results, filt):
     '''
     filter results dataframe according to `filt`
     filt: dictionary with respective columns as keys and a list of values to be filtered fo
+    ToDO: filter for parameter tuples, e.g. 20,1e-5 + 15,1e-3 specifically, list of filters best?
     '''
     filt = filt.copy()
     start_date = _extract_date(filt, 'start_date')
@@ -196,12 +198,12 @@ def filt_df(df_results, filt):
     return df_results.loc[(crit_filt)]
 
 # Cell
-def get_top(df_results, filt, by, n=5, start_date=None, end_date=None):
+def get_top(df_results, filt, by, n=5):
     '''
     filter and sort df_results, return top n indices
-    optional Timestamp filters
     '''
-    idxs=filt_df(df_results, filt).sort_values(by=by, ascending=False).head(n).index.values
+    ascending = False if not 'loss' in by else True
+    idxs=filt_df(df_results, filt).sort_values(by=by, ascending=ascending).head(n).index.values
     return list(idxs)
 
 # Cell
