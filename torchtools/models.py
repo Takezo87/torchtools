@@ -15,6 +15,7 @@ import torch.nn.functional as F
 from functools import partial
 
 from fastai.layers import SigmoidRange
+from fastai.torch_basics import *
 
 # Cell
 # This is an unofficial PyTorch implementation by Ignacio Oguiza - oguiza@gmail.com based on:

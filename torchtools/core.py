@@ -22,7 +22,9 @@ def leaky_loss(preds, y_true, alpha=0.05):
     objective function, including negative predictions with factor alpha
     '''
     loss_1 = (F.leaky_relu(preds, alpha).squeeze()*y_true.float()).mean()*(-1)
-    loss_1.requires_grad_(True)
+    #loss_1.requires_grad_()
+    #assert loss_1.requires_grad == True
+    # loss_1.requires_grad_(True)
     return loss_1
 
 # Cell
