@@ -82,9 +82,15 @@ def get_mod(dls, arch='inception'):
                                     len(dls.cols_cont), emb_szs=emb_szs)
     else:
         if dls.dataset.has_x[1]: ##discrete channels
-            return InceptionTimeD(dls.n_channels, dls.n_targets)
+            if arch=='transformer':
+                return TransformerSgmD(dls.n_channels, dls.n_targets)
+            else:
+                return InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
-            return InceptionTimeSgm(dls.n_channels, dls.n_targets)
+            if arch=='transformer':
+                return TransformerSgm(dls.n_channels, dls.n_targets)
+            else:
+                return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
 # Cell
 def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5, shuffle_train=True,
@@ -256,7 +262,8 @@ def _to_flat_dict(train_params):
         if key=='metrics':
             for i,_ in enumerate(listify(value)):
                 flat_dict[f'metric_{i}'] = value[i].__name__
-        elif key=='arch': flat_dict[key] = value.__name__
+        #arch parameter should be string, but used to be <class model>
+        elif key=='arch' and not isinstance(value, str): flat_dict[key] = value.__name__
         else: flat_dict[key]=value
     return flat_dict
 
@@ -428,7 +435,7 @@ class TSExperiments:
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
 
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
-        model = get_mod(self.dls, arch=arch)
+        model = get_mod(self.dls, arch=self.train_params['arch'])
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
                        wd=wd)
         print(learn.dls.after_batch)
