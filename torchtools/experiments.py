@@ -62,7 +62,7 @@ def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
-def get_mod(dls, arch='inception'):
+def get_mod(dls, arch='inception', dropout=None):
     if dls.classification and not dls.mixed:
         return InceptionTime(dls.n_channels, dls.c)
 
@@ -83,12 +83,12 @@ def get_mod(dls, arch='inception'):
     else:
         if dls.dataset.has_x[1]: ##discrete channels
             if arch=='transformer':
-                return TransformerSgmD(dls.n_channels, dls.n_targets)
+                return TransformerSgmD(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
                 return InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
             if arch=='transformer':
-                return TransformerSgm(dls.n_channels, dls.n_targets)
+                return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
                 return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
@@ -435,7 +435,7 @@ class TSExperiments:
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
 
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
-        model = get_mod(self.dls, arch=self.train_params['arch'])
+        model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'))
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
                        wd=wd)
         print(learn.dls.after_batch)
