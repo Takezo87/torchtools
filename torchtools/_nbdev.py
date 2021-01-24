@@ -4,6 +4,7 @@ __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
 index = {"test": "00_core.ipynb",
          "leaky_loss": "00_core.ipynb",
+         "gamblers_loss": "00_core.ipynb",
          "leaky_loss_2d": "00_core.ipynb",
          "one_hot": "00_core.ipynb",
          "create_rww_categorical_crossentropy": "00_core.ipynb",
