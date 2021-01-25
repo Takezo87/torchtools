@@ -69,6 +69,9 @@ def get_mod(dls, arch='inception', dropout=None):
     if arch=='inception_gb': #hack, works only for continuous channels and 1 target
         return InceptionTime(dls.n_channels, 2)
 
+    if arch=='transformer_gb': #hack, works only for continuous channels and 1 target
+        return TST(dls.n_channels, 2, 10)
+
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
