@@ -22,6 +22,7 @@ import numpy as np
 from fastai.basics import *
 #from fast_tabnet.core import *
 from fastcore.script import *
+from fastai.callback.tracker import *
 
 # Cell
 ## data config
@@ -325,6 +326,7 @@ class TSExperiments:
         self.preds_path = ifnone(preds_path, './experiments/preds')
         self.model_path = ifnone(model_path, './experiments/models')
         self.results_path = ifnone(results_path, './experiments/results')
+        self.model_fn = _get_model_fn()
 
     def setup_data(self, data_params):
         #read in dataframe
@@ -387,7 +389,7 @@ class TSExperiments:
 
     def _save_model(self):
     #         val_preds_fn = _get_preds_fn()
-        model_fn = _get_model_fn()
+        model_fn = self.model_fn
         self.learn.save(model_fn)
         self.df_dict.update({'model_fn':f'{self.learn.model_dir}/{model_fn}.pth'})
 
@@ -396,7 +398,7 @@ class TSExperiments:
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
                      N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
-                     verbose=False, weight=None, **kwargs):
+                     verbose=False, weight=None, save_best=False, **kwargs):
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
@@ -430,6 +432,7 @@ class TSExperiments:
             augs.setup(self.dls[0])
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')
+        cbs = SaveModelCallback(fname=self.model_fn) if save_best else None
 
 #         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not self.dls.classification else get_loss_fn_class(
@@ -443,7 +446,7 @@ class TSExperiments:
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
         model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'))
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
-                       wd=wd)
+                       wd=wd, cbs=cbs)
         print(learn.dls.after_batch)
 
 #         print(f'wd: {wd} {learn.wd}')
