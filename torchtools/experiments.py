@@ -326,7 +326,6 @@ class TSExperiments:
         self.preds_path = ifnone(preds_path, './experiments/preds')
         self.model_path = ifnone(model_path, './experiments/models')
         self.results_path = ifnone(results_path, './experiments/results')
-        self.model_fn = _get_model_fn()
 
     def setup_data(self, data_params):
         #read in dataframe
@@ -462,6 +461,7 @@ class TSExperiments:
         could wrap the dataset parameters
         '''
         assert df_fn is not None, 'please specify results csv filename'
+        self.model_fn = _get_model_fn()
 
         self.learn = self.run_training(**self.train_params)
 #         rec_dict = get_recorder_dict(self.learn.recorder)
@@ -472,6 +472,8 @@ class TSExperiments:
         ## store prediction in a separate file as tensors, but add filename
         self._save_preds(test=False)
         if self.save_model: self._save_model()
+        if self.save_model or self.train_params.get('save_best'):
+            self.df_dict.update({'model_fn':f'{self.learn.model_dir}/{self.model_fn}.pth'})
         _write_results(pd.DataFrame([self.df_dict], index=[0]), Path(self.results_path)/df_fn)
 #         return df_dict
 
