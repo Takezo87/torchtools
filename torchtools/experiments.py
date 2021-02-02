@@ -101,7 +101,7 @@ def get_mod(dls, arch='inception', dropout=None):
 
 # Cell
 def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5, shuffle_train=True,
-           verbose=False, ss_dis=True, cols_cont=None, cols_cat=None, classification=False):
+           verbose=False, ss_dis=True, cols_cont=None, cols_cat=None, classification=False, stats=None):
     '''
     create dataloaders
     handling of discrete channels with cols_d and ss_dis
@@ -133,8 +133,10 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5,
     batch_tfms=[]
     print(has_col)
     ###!!!!HACK!!!!!
-    if has_col[0] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
-    if has_col[1] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
+    if stats is not None: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose).from_stats(*stats)]
+    else:
+        if has_col[0] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose)]
+        if has_col[1] and ss_dis: batch_tfms+=[TSStandardize(by_var=True, verbose=verbose, discrete=True)]
 #     augmix = AugmixSS()
 #     print(batch_tfms)
 #     return dsets
@@ -355,11 +357,12 @@ class TSExperiments:
         self.ds_id = _get_ds_id(data_params, self.splits)
         self.classification = data_params.get('classification', False)
         self.prune = prune
+        self.stats = data_params.get('stats')
 #         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
 #                            ss_dis=ss_dis)
         self.dls = get_dls(self.df_base, cols_c, cols_y, self.splits, cols_d=cols_d, bs=self.bs,
                            ss_dis=ss_dis, cols_cont=cols_cont, cols_cat=cols_cat, ds_type=TSDatasets5,
-                          classification=self.classification)
+                          classification=self.classification, stats=self.stats)
 
 
     def setup_training(self, train_params):
