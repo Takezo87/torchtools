@@ -492,7 +492,7 @@ class TSExperiments:
         for config in hyper_configs:
             self.train_params.update(config)
             print(self.train_params)
-        self.run_experiment(df_fn=df_results_fn)
+            self.run_experiment(df_fn=df_results_fn)
 
 # Cell
 def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitter_fn=TSSplitter(),
