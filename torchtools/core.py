@@ -266,7 +266,7 @@ def combo_profit(preds, y_true, threshold=0.8, quantile=0.9):
     combination profit
     preds in (0,1)
     '''
-    preds = preds_squeeze()
+    preds = preds.squeeze()
     idxs_pos = torch.where(preds>= torch.quantile(preds, quantile))
     idxs_neg = torch.where(preds<= torch.quantile(preds, 1-quantile))
     m_value = y_true[idxs_pos].mean() + (-1)*(y_true[idxs_neg] + 4.2).mean()
@@ -282,7 +282,7 @@ def quantile_profit(preds, y_true, quantile=0.9, bottom=False):
         idxs = torch.where(preds>= torch.quantile(preds, quantile))
     else:
         idxs = torch.where(preds<= torch.quantile(preds, 1-quantile))
-    m_value = y_true[idxs_pos].mean()
+    m_value = y_true[idxs].mean()
     return m_value
 
 # Cell
@@ -316,6 +316,11 @@ def get_loss_fn(loss_fn_name, **kwargs):
     if loss_fn_name == 'leaky_loss':
         assert kwargs.get('alpha', None) is not None, 'need to specify alpha with leaky_loss'
         _loss_fn = partial(leaky_loss, alpha=kwargs['alpha'])
+        _loss_fn.__name__ = loss_fn_name
+        return _loss_fn
+    if loss_fn_name == 'leaky_loss_squared':
+        assert kwargs.get('alpha', None) is not None, 'need to specify alpha with leaky_loss'
+        _loss_fn = partial(leaky_loss_squared, alpha=kwargs['alpha'])
         _loss_fn.__name__ = loss_fn_name
         return _loss_fn
     if loss_fn_name == 'gambler':
