@@ -25,6 +25,10 @@ from fastcore.script import *
 from fastai.callback.tracker import *
 
 # Cell
+from tsai.models.InceptionTimePlus import *
+from tsai.models.TSTPlus import *
+
+# Cell
 ## data config
 df_fn = 'bi_sample_anon.csv'
 df_dir = Path('./data/custom')
@@ -95,7 +99,8 @@ def get_mod(dls, arch='inception', dropout=None):
                 return InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
             if arch=='transformer':
-                return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
+                #return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
+                return TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1))
             else:
                 return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
