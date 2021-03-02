@@ -326,7 +326,7 @@ def top_quantile_double(preds, y_true, quantile=0.9):
     preds = preds.squeeze()
     idxs_over = torch.where(preds>= torch.quantile(preds, quantile))[0]
     idxs_under = torch.where(preds<= torch.quantile(preds, 1-quantile))[0]
-    m_value = (y_true[idxs_over, 0].mean() + y_true[idxs_under, 1].mean() / 2.
+    m_value = (y_true[idxs_over, 0].mean() + y_true[idxs_under, 1].mean()) / 2.
     return m_value
 
 def top10_double(preds, y_true):
