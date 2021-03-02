@@ -85,7 +85,8 @@ def get_mod(dls, arch='inception', dropout=None):
         return TST(dls.n_channels, 2, 10)
 
     if arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
-        return TST(dls.n_channels, 1, 10)
+        #return TST(dls.n_channels, 1, 10):
+        return TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, y_range=(-1,1))
 
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
@@ -417,7 +418,7 @@ class TSExperiments:
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
                      N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
-                     verbose=False, weight=None, save_best=False, **kwargs):
+                     verbose=False, weight=None, save_best=False, **kwargs)
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
