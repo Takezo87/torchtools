@@ -68,6 +68,13 @@ def get_emb_sz(to, sz_dict=None):
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
 def get_mod(dls, arch='inception', dropout=None):
+    '''
+    architectures:
+    - inception
+    - transformer
+    - tst
+    - inception_gb, transformer_gb
+    '''
     if dls.classification and not dls.mixed:
         return InceptionTime(dls.n_channels, dls.c)
 
@@ -76,6 +83,9 @@ def get_mod(dls, arch='inception', dropout=None):
 
     if arch=='transformer_gb': #hack, works only for continuous channels and 1 target
         return TST(dls.n_channels, 2, 10)
+
+    if arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
+        return TST(dls.n_channels, 1, 10)
 
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
@@ -98,9 +108,11 @@ def get_mod(dls, arch='inception', dropout=None):
             else:
                 return InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
-            if arch=='transformer':
+            if arch=='tst':
                 #return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
                 return TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1))
+            if arch=='transformer':
+                return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
                 return InceptionTimeSgm(dls.n_channels, dls.n_targets)
 
@@ -439,7 +451,8 @@ class TSExperiments:
             augs.setup(self.dls[0])
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')
-        cbs = SaveModelCallback(fname=self.model_fn) if save_best else None
+        cbs = [SaveModelCallback(fname=f'{self.model_fn}_best_val'),
+               SaveModelCallback(fname=f'{self.model_fn}_best_combo_profit', monitor='combo_profit')] if save_best else None
 
 #         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not self.dls.classification else get_loss_fn_class(
