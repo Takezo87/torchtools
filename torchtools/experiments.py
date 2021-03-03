@@ -418,7 +418,7 @@ class TSExperiments:
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
                      N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
-                     verbose=False, weight=None, save_best=False, **kwargs)
+                     verbose=False, weight=None, save_best=False, **kwargs):
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
