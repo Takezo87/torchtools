@@ -67,7 +67,7 @@ def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
-def get_mod(dls, arch='inception', dropout=None):
+def get_mod(dls, arch='inception', dropout=None, fc_dropout=None):
     '''
     architectures:
     - inception
@@ -86,7 +86,7 @@ def get_mod(dls, arch='inception', dropout=None):
 
     if arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
         #return TST(dls.n_channels, 1, 10):
-        return TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, y_range=(-1,1))
+        return TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, fc_dropout=fc_dropout, y_range=(-1,1))
 
     if dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
@@ -465,7 +465,8 @@ class TSExperiments:
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
 
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
-        model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'))
+        model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'),
+                       fc_dropout=self.train_params.get('fc_dropout'))
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
                        wd=wd, cbs=cbs)
         print(learn.dls.after_batch)
