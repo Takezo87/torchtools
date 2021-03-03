@@ -453,7 +453,8 @@ class TSExperiments:
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')
         cbs = [SaveModelCallback(fname=f'{self.model_fn}_best_val'),
-               SaveModelCallback(fname=f'{self.model_fn}_best_combo_profit', monitor='combo_profit')] if save_best else None
+               #SaveModelCallback(fname=f'{self.model_fn}_best_combo_profit', monitor='combo_profit'),
+              ] if save_best else None
 
 #         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha)
         loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not self.dls.classification else get_loss_fn_class(
