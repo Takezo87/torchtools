@@ -27,6 +27,7 @@ from fastai.callback.tracker import *
 # Cell
 from tsai.models.InceptionTimePlus import *
 from tsai.models.TSTPlus import *
+from tsai.models.utils import build_ts_model, transfer_weights
 
 # Cell
 ## data config
@@ -67,55 +68,62 @@ def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
-def get_mod(dls, arch='inception', dropout=None, fc_dropout=None):
+def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=None):
     '''
     architectures:
     - inception
     - transformer
     - tst
     - inception_gb, transformer_gb
+    - transformer_dl (for double loss, preds 1d, y 2d)
+    - pretrained: specify pretrained model path, make sure it corresponds to the chosen architecture
     '''
     if dls.classification and not dls.mixed:
-        return InceptionTime(dls.n_channels, dls.c)
+        model = InceptionTime(dls.n_channels, dls.c)
 
-    if arch=='inception_gb': #hack, works only for continuous channels and 1 target
-        return InceptionTime(dls.n_channels, 2)
+    elif arch=='inception_gb': #hack, works only for continuous channels and 1 target
+        model = InceptionTime(dls.n_channels, 2)
 
-    if arch=='transformer_gb': #hack, works only for continuous channels and 1 target
-        return TST(dls.n_channels, 2, 10)
+    elif arch=='transformer_gb': #hack, works only for continuous channels and 1 target
+        model = TST(dls.n_channels, 2, 10)
 
-    if arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
+    elif arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
         #return TST(dls.n_channels, 1, 10):
-        return TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, fc_dropout=fc_dropout, y_range=(-1,1))
+        model = TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, fc_dropout=fc_dropout, y_range=(-1,1))
 
-    if dls.n_channels==0:
+    elif dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
-        return TabNetTT(emb_szs=emb_szs, n_cont=len(dls.cols_cont), out_sz=dls.n_targets)
+        model = TabNetTT(emb_szs=emb_szs, n_cont=len(dls.cols_cont), out_sz=dls.n_targets)
 
-    if dls.mixed:
+    elif dls.mixed:
         emb_szs= [_one_emb_sz(dls.voc, c) for c in listify(dls.cols_cat)]
 
         if dls.classification:
-             return InceptionTime_Mixed(dls.n_channels_c, dls.n_channels_d, dls.c,
+             model = InceptionTime_Mixed(dls.n_channels_c, dls.n_channels_d, dls.c,
                                     len(dls.cols_cont), emb_szs=emb_szs)
         else:
-            return InceptionTimeD_Mixed(dls.n_channels_c, dls.n_channels_d, dls.n_targets,
+            model = InceptionTimeD_Mixed(dls.n_channels_c, dls.n_channels_d, dls.n_targets,
                                     len(dls.cols_cont), emb_szs=emb_szs)
     else:
         if dls.dataset.has_x[1]: ##discrete channels
             if arch=='transformer':
-                return TransformerSgmD(dls.n_channels, dls.n_targets, res_dropout=dropout)
+                model = TransformerSgmD(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
-                return InceptionTimeD(dls.n_channels, dls.n_targets)
+                model = InceptionTimeD(dls.n_channels, dls.n_targets)
         else:
             if arch=='tst':
                 #return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
-                return TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1))
+                model = TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1))
             if arch=='transformer':
-                return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
+                model = TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
-                return InceptionTimeSgm(dls.n_channels, dls.n_targets)
+                model = InceptionTimeSgm(dls.n_channels, dls.n_targets)
+
+    if pretrained:
+        transfer_weights(model, pretrained, exclude_head=True) #this works only for tsai plus models
+
+    return model
 
 # Cell
 def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5, shuffle_train=True,
@@ -464,10 +472,13 @@ class TSExperiments:
 
         set_seed(seed)
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
+        pretrained = None
+        if self.train_params.get('pretrained') is not None:
+            pretrained = Path(self.model_path)/'pretrained'/self.train_params.get('pretrained')
 
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
         model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'),
-                       fc_dropout=self.train_params.get('fc_dropout'))
+                       fc_dropout=self.train_params.get('fc_dropout'), pretrained=pretrained)
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
                        wd=wd, cbs=cbs)
         print(learn.dls.after_batch)

@@ -18,8 +18,11 @@ import pickle
 
 def _get_mock_learner(ts_experiment, arch):
     #return Learner(ts_runner.db, model=ts_runner.train_params['arch'](ts_runner.db.features, ts_runner.db.c))
-    model = get_mod(ts_experiment.dls, arch=arch, dropout=0.1)
-    learn = Learner(ts_experiment.dls, model, get_loss_fn('leaky_loss', alpha=0.5))
+    model = get_mod(ts_experiment.dls, arch=arch, dropout=0.1, fc_dropout=0.1)
+    if arch=='transformer_dl':
+        learn = Learner(ts_experiment.dls, model, get_loss_fn('double_loss_squared', alpha=0.5))
+    else:
+        learn = Learner(ts_experiment.dls, model, get_loss_fn('leaky_loss', alpha=0.5))
     return learn
 
 def _get_base_dir(is_colab=False):
@@ -94,11 +97,25 @@ def _reload_model(ts_experiment, eval_conf, idx):
         fn=eval_conf.preds_dir/eval_conf.df_results.iloc[idx]['test_preds']
     return torch.load(fn)
 
+def _reload_model_from_path(ts_experiment, fn, arch):
+    '''
+    load model into ts_experiment, full path
+    '''
+    ts_experiment.learn = _get_mock_learner(ts_experiment, arch)
+    # print(ts_experiment.learn.model)
+    ts_experiment.learn.load(Path(fn).stem)
+
 def load_preds(ts_experiment, eval_conf, idxs, dl_idx=2):
     preds = []
     for idx in idxs:
         _reload_model(ts_experiment, eval_conf, idx)
         preds.append(ts_experiment.learn.get_preds(dl_idx)[0])
+    return preds
+
+def load_preds_from_path(ts_experiment, fn, arch, dl_idx=2):
+    _reload_model_from_path(ts_experiment, fn, arch)
+        # preds.append(ts_experiment.learn.get_preds(dl_idx)[0])
+    preds, _ = ts_experiment.learn.get_preds(dl_idx)
     return preds
 
 def complement_idxs(idxs):  
