@@ -28,9 +28,10 @@ def _get_mock_learner(ts_experiment, arch):
 def _get_base_dir(is_colab=False):
     return Path('./') if not is_colab else Path('~/google-drive').expanduser()
 
-def _results_fn(is_colab=False, is_class=False):
+def _results_fn(is_colab=False, is_class=False, ou=False):
     if is_colab:
         results_fn='results_colab.csv' if not is_class else 'results_colab_class.csv'
+        if ou: results_fn='results_colab_ou.csv'
     else:
         results_fn='results_exploration.csv' if not is_class else 'results_exploration_class.csv' 
     return results_fn
@@ -46,8 +47,9 @@ class EvalConfig:
     
     '''
     def __init__(self, is_colab, is_class, df_base_path, results_loc='experiments/results',
-                preds_loc='experiments/preds', model_loc='experiments/models', preprocess=True):
-        self.is_colab, self.is_class, self.df_base_path = is_colab, is_class, df_base_path
+                preds_loc='experiments/preds', model_loc='experiments/models', preprocess=True,
+                ou=False):
+        self.is_colab, self.is_class, self.df_base_path, self.ou = is_colab, is_class, df_base_path, ou
         self.results_loc, self.preds_loc, self.model_loc = results_loc, preds_loc, model_loc
         
     @property
@@ -59,7 +61,7 @@ class EvalConfig:
     @property
     def model_dir(self): return self.base_dir/self.model_loc
     @property
-    def df_results_path(self): return self.results_dir/_results_fn(self.is_colab, self.is_class)
+    def df_results_path(self): return self.results_dir/_results_fn(self.is_colab, self.is_class, self.ou)
     @property
     def df_results(self):
         print(self.df_results_path)
