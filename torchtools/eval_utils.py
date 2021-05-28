@@ -48,9 +48,9 @@ class EvalConfig:
     '''
     def __init__(self, is_colab, is_class, df_base_path, results_loc='experiments/results',
                 preds_loc='experiments/preds', model_loc='experiments/models', preprocess=True,
-                ou=False):
+                ou=False, fn=None):
         self.is_colab, self.is_class, self.df_base_path, self.ou = is_colab, is_class, df_base_path, ou
-        self.results_loc, self.preds_loc, self.model_loc = results_loc, preds_loc, model_loc
+        self.results_loc, self.preds_loc, self.model_loc, self.fn = results_loc, preds_loc, model_loc, fn
         
     @property
     def base_dir(self): return _get_base_dir(self.is_colab)
@@ -61,7 +61,9 @@ class EvalConfig:
     @property
     def model_dir(self): return self.base_dir/self.model_loc
     @property
-    def df_results_path(self): return self.results_dir/_results_fn(self.is_colab, self.is_class, self.ou)
+    def df_results_path(self):
+        fn = self.fn if self.fn is not None else _results_fn(self.is_colab, self.is_class, self.ou)
+        return self.results_dir/fn
     @property
     def df_results(self):
         print(self.df_results_path)
@@ -136,3 +138,10 @@ def _get_bet_idxs(preds, threshold=None, quantile=0.9, complement=False):
         threshold = np.quantile(preds, quantile) if not complement else -np.quantile(-preds, quantile)
     print(threshold)
     return torch.where(preds>threshold)[0] if not complement else complement_idxs(torch.where(preds<threshold)[0])
+
+def get_opp_preds(df, preds_col='preds'):
+    '''
+    create a column for the opponent predictions
+    '''
+    idxs_c = complement_idxs(tensor(df.index))
+    l

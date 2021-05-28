@@ -199,6 +199,9 @@ def _remove_augs(dls):
     print(fs)
     dls.after_batch.fs.clear()
     for f in fs: dls.after_batch.add(f)
+    #since fastai 2.29 dls.after_batch no longer automatically equal to dls.valid.after_batch etc..
+    for dl in dls:
+        dl.after_batch=dls.after_batch
     print(dls.after_batch, dls.train.after_batch)
 
 # Cell
@@ -214,7 +217,7 @@ def run_training(dls, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
     assert loss_fn_name and n_epochs, 'must pass loss_fn_name, and n_epochs'
 
     print(f'pct_start: {pct_start} div_factor: {div_factor}')
-    set_seed(seed)
+    set_seed(seed, reproducible=True)
 #     model = arch(db.features, db.c)
 #     model = arch(6,1)
 
@@ -470,7 +473,7 @@ class TSExperiments:
         print(loss_fn)
 
 
-        set_seed(seed, reproducible=True)
+        set_seed(seed)
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
         pretrained = None
         if self.train_params.get('pretrained') is not None:
