@@ -470,7 +470,7 @@ class TSExperiments:
         print(loss_fn)
 
 
-        set_seed(seed)
+        set_seed(seed, reproducible=True)
         self.dls.train.rng = random.Random(random.randint(0,2**32-1))
         pretrained = None
         if self.train_params.get('pretrained') is not None:
