@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 from fastai.basics import *
 import pickle
+import os
 
 
 
@@ -84,6 +85,17 @@ class EvalConfig:
         self._df_results = pd.read_csv(self.df_results_path)
         pre_process_results(self._df_results)
 
+    def delete_row(row_idx):
+        '''
+        delete experiment row and associated models, predictions
+        '''
+        pass
+
+
+def delete_model(eval_conf, idx):
+    fn = eval_conf.df_results.iloc[idx]['model_fn']
+    print(fn)
+    os.remove(eval_conf.model_dir/Path(fn).name)
 
 def _reload_model(ts_experiment, eval_conf, idx):
     '''
@@ -144,4 +156,4 @@ def get_opp_preds(df, preds_col='preds'):
     create a column for the opponent predictions
     '''
     idxs_c = complement_idxs(tensor(df.index))
-    l
+    
