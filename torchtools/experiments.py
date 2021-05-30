@@ -197,7 +197,7 @@ def _remove_augs(dls):
     '''
     fs = [f for f in dls.train.after_batch.fs if not issubclass(type(f), AugTransform)]
     print(fs)
-    dls.after_batch.fs.clear()
+    dls.train.after_batch.fs.clear()
     for f in fs: dls.train.after_batch.add(f)
     #since fastai 2.29 dls.after_batch no longer automatically equal to dls.valid.after_batch etc..
     #for dl in dls:
