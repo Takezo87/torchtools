@@ -453,7 +453,7 @@ class TSExperiments:
         if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='rand_tsai':
-            augs = tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs, N=1, M=5)
+            augs = tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs, N=N, M=int(magnitude*10))
         elif aug=='augmix':
             _augsmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
             augs=_augmixtype(N=N, magnitude=magnitude, verbose=verbose)
