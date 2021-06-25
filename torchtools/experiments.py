@@ -28,6 +28,7 @@ from fastai.callback.tracker import *
 from tsai.models.InceptionTimePlus import *
 from tsai.models.TSTPlus import *
 from tsai.models.utils import build_ts_model, transfer_weights
+import tsai.data.transforms as tsai_tfms
 
 # Cell
 ## data config
@@ -451,8 +452,10 @@ class TSExperiments:
         _remove_augs(self.dls)
         if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
+        elif aug=='rand_tsai':
+            augs = tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs, N=1, M=5)
         elif aug=='augmix':
-            _augmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
+            _augsmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
             augs=_augmixtype(N=N, magnitude=magnitude, verbose=verbose)
             print(f'augmix order {augs.order}')
         else:
