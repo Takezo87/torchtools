@@ -197,12 +197,14 @@ def _remove_augs(dls):
     '''
     fs = [f for f in dls.train.after_batch.fs if not issubclass(type(f), AugTransform)]
     print(fs)
-    dls.train.after_batch.fs.clear()
-    for f in fs: dls.train.after_batch.add(f)
+    for dl in dls:
+        dl.after_batch.fs.clear()
+    #dls.train.after_batch.fs.clear()
+    for f in fs: dls.add_tfms(f, 'after_batch') #fastcore 1.3.20
     #since fastai 2.29 dls.after_batch no longer automatically equal to dls.valid.after_batch etc..
     #for dl in dls:
     #    dl.after_batch=dls.after_batch
-    print(dls.after_batch, dls.train.after_batch)
+    print(dls.after_batch, dls.train.after_batch, dls.valid.after_batch)
 
 # Cell
 def run_training(dls, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
@@ -227,7 +229,7 @@ def run_training(dls, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
     augs = RandAugment(N=N, magnitude=magnitude, verbose=True) if aug=='randaugment' else Augmix(
         N=N, magnitude=magnitude, verbose=True) if aug=='augmix' else None
 #     augs  = Augmix(verbose=True)
-    if augs: dls.after_batch.add(augs)
+    if augs: dls.add_tfms(augs, 'after_batch')
     loss_fn = get_loss_fn(loss_fn_name, alpha=alpha) if not dls.classification else get_loss_fn
     print(loss_fn)
 
@@ -459,7 +461,7 @@ class TSExperiments:
         print(augs)
         print(augs is None)
         if augs:
-            self.dls.after_batch.add(augs)
+            self.dls.add_tfms(augs, 'after_batch')
             augs.setup(self.dls[0])
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')

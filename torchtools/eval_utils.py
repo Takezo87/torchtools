@@ -125,7 +125,15 @@ def load_preds(ts_experiment, eval_conf, idxs, dl_idx=2):
     preds = []
     for idx in idxs:
         _reload_model(ts_experiment, eval_conf, idx)
-        preds.append(ts_experiment.learn.get_preds(dl_idx)[0])
+        #fix, with fastcore 1.3.20 and fastai 2.3.1, get_preds removes TSStandardize from the
+        #dataloader
+        tsstandardize = ts_experiment.dls[dl_idx].after_batch[0] #more than one transform?
+        p, y = ts_experiment.learn.get_preds(dl_idx)
+        ts_experiment.dls[dl_idx].after_batch.add(tsstandardize)
+        assert len(ts_experiment.dls[dl_idx].after_batch.fs)==1
+        # print(ts_experiment.dls[dl_idx].after_batch[0].mean)
+        print(torch.quantile(p, 0.95))
+        preds.append(p)
     return preds
 
 def load_preds_from_path(ts_experiment, fn, arch, dl_idx=2):
@@ -156,4 +164,10 @@ def get_opp_preds(df, preds_col='preds'):
     create a column for the opponent predictions
     '''
     idxs_c = complement_idxs(tensor(df.index))
-    
+   
+def eval_ou_df(df, q=0.95, min_date=datetime(2010,1,1), by_year=False):
+    df.date = pd.to_datetime(df.date)
+    th, td = np.quantile(df.preds.values,q) , np.quantile(df.preds.values, 1-q)
+
+    print(df.loc[np.logical_and(df.preds>=th, df.date>=min_date)][['pl_over', 'pl_under']].agg(['mean', 'sum', 'count']))
+    print(df.loc[np.logical_and(df.preds<=td, df.date>=min_date)][['pl_over', 'pl_under']].agg(['mean', 'sum', 'count']))
