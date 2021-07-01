@@ -2,7 +2,7 @@
 
 __all__ = ['To3dArray', 'ToArray', 'decompress_from_url', 'get_UCR_univariate_list', 'get_UCR_multivariate_list',
            'get_UCR_univariate', 'get_UCR_multivariate', 'get_UCR_data', 'ucr_to_items', 'get_simple_config',
-           'items_from_df', 'items_from_df', 'cats_from_df']
+           'items_from_df', 'cats_from_df']
 
 # Cell
 from .data import *
@@ -13,6 +13,7 @@ import numpy as np
 from fastai.torch_basics import *
 from fastai.data.all import *
 from fastai.callback.all import *
+import torch
 
 # Cell
 import os
@@ -306,37 +307,7 @@ def _normalize(x, means, stds):
     for i,v in enumerate(means): x[:,i,:]
 
 # Cell
-def items_from_df(df, cols_c, cols_y, n_train, cols_d=None):
-    '''
-    creates timeseries items from a dataframe
-
-    parameters:
-    df: input dataframe
-    cols_c: list of lists of columns for continuous valued channels (one list for each channel)
-    cols_d: (optional) list of lists of columns for discrete valued channels
-    cols_y: (list or single value) target column(s)
-    n_train: int, neeeds to be provided for calculating the stats that are necessary to fill missing values
-
-    return a list of (xc,(xd),y) tuples (one list element for each dataframe row)
-    '''
-    x,y = _get_x(df, cols_c), _get_y(df, cols_y)
-    print(x.shape)
-    means,stds,medians =  _calc_stats(x, n_train)
-    _fillna(x, means)
-    assert not np.isnan(x).any()
-
-    if cols_d:
-        xd = _get_x(df, cols_d)
-        print(xd.shape)
-#         means,stds,medians =  _calc_stats(x, n_train)
-        _fillna(xd, 0)
-        assert not np.isnan(xd).any()
-        return list(zip(x, xd.astype(np.int16), y))
-
-    return list(zip(x,y))
-
-# Cell
-def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None):
+def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None , stats=None):
     '''
     creates timeseries items from a dataframe
 
@@ -347,6 +318,7 @@ def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None):
     cols_y: (list or single value) target column(s)
     n_train: int, neeeds to be provided for calculating the stats that are necessary to fill missing values
     tab_cols_c: (list or single value) tabular continunous columns
+    stats: tuple (means, stds, medians)
 
     return a list of (xc,(xd),y) tuples (one list element for each dataframe row)
     '''
@@ -359,7 +331,16 @@ def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None):
         if cols is not None:
             x=_get_x(df, cols, dtype=t)
             axis=(0,2) if is_listy(cols[0]) else (0)
-            means,stds,medians =  _calc_stats(x, n_train, axis=axis)
+            if stats is None:
+                means,stds,medians =  _calc_stats(x, n_train, axis=axis)
+            else:
+                means, stds, medians = stats
+                if isinstance(means, torch.Tensor):
+                    means, stds = means.to('cpu').numpy(), stds.to('cpu').numpy()
+                means, stds = means.squeeze(), stds.squeeze()
+
+            #print(means.squeeze())
+            #print(_calc_stats(x, n_train, axis=axis)[0])
             _fillna(x, means)
             assert not np.isnan(x).any()
             xs.append(x)

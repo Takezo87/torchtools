@@ -133,9 +133,13 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5,
     create dataloaders
     handling of discrete channels with cols_d and ss_dis
     NOTE: continuous tab cols 3d, cat tab cols 2d, legacy....
+    args:
+        stats: (means ,stds) (items_from_df expects (means, stds, medians))
     '''
 
-    items = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d, tab_cols_c=cols_cont)
+    items = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d, tab_cols_c=cols_cont, stats=(*stats, None))
+
+    print(len(items), len(items[0]))
     ars=items_to_arrays(items)
     has_col=[cols_c is not None, cols_d is not None, cols_cont is not None]
     Xc, Xd, X_conts = map_xs(ars[:-1], has_col)
@@ -453,7 +457,7 @@ class TSExperiments:
         if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='rand_tsai':
-            augs = tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs, N=N, M=int(magnitude*10))
+            augs = [ToTsaiTensor(), tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs[:2], N=N, M=int(magnitude*10))]
         elif aug=='augmix':
             _augsmixtype=AugmixSS if kwargs.get('augmixss') is not None else Augmix
             augs=_augmixtype(N=N, magnitude=magnitude, verbose=verbose)
@@ -465,7 +469,9 @@ class TSExperiments:
         print(augs is None)
         if augs:
             self.dls.add_tfms(augs, 'after_batch')
-            augs.setup(self.dls[0])
+            if not is_listy(augs): augs=[augs]
+            for aug in augs:
+                aug.setup(self.dls[0])
             ## Pipeline.add does not reorder the transforms, but we want the augmentation before the standardisation
             self.dls.after_batch.fs = self.dls.after_batch.fs.sorted(key='order')
         cbs = [SaveModelCallback(fname=f'{self.model_fn}_best_val'),
