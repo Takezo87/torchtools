@@ -136,8 +136,10 @@ def get_dls(df, cols_c, cols_y, splits, cols_d=None, bs=64, ds_type=TSDatasets5,
     args:
         stats: (means ,stds) (items_from_df expects (means, stds, medians))
     '''
+    if stats is not None:
+        stats = (*stats, None)
 
-    items = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d, tab_cols_c=cols_cont, stats=(*stats, None))
+    items = items_from_df(df, cols_c, cols_y, len(splits[0]), cols_d=cols_d, tab_cols_c=cols_cont, stats=stats)
 
     print(len(items), len(items[0]))
     ars=items_to_arrays(items)
