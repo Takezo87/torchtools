@@ -332,11 +332,15 @@ def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None , st
             x=_get_x(df, cols, dtype=t)
             axis=(0,2) if is_listy(cols[0]) else (0)
             if stats is None:
-                means,stds,medians =  _calc_stats(x, n_train, axis=axis)
+                means, stds, medians =  _calc_stats(x, n_train, axis=axis)
             else:
-                means, stds, medians = stats
+                means, stds, medians = stats #medians will be None right now
                 if isinstance(means, torch.Tensor):
-                    means, stds = means.to('cpu').numpy(), stds.to('cpu').numpy()
+                    stds.torch('cpu').numpy()
+                if isinstance(stds, torch.Tensor):
+                    stds.to('cpu').numpy()
+                if isinstance(medians, torch.Tensor):
+                    medians.to('cpu').numpy()
                 means, stds = means.squeeze(), stds.squeeze()
 
             #print(means.squeeze())
