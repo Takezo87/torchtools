@@ -344,7 +344,6 @@ def items_from_df(df, cols_c, cols_y, n_train, cols_d=None, tab_cols_c=None , st
                 means, stds = means.squeeze(), stds.squeeze()
 
             #print(means.squeeze())
-            print(type(means), isinstance(means, torch.Tensor))
             #print(_calc_stats(x, n_train, axis=axis)[0])
             _fillna(x, means)
             assert not np.isnan(x).any()

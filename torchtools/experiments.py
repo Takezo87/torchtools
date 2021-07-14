@@ -436,7 +436,7 @@ class TSExperiments:
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
                      N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
-                     verbose=False, weight=None, save_best=False, **kwargs):
+                     verbose=False, weight=None, save_best=False, aug_params=None, **kwargs):
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
@@ -454,7 +454,16 @@ class TSExperiments:
 
 
         _remove_augs(self.dls)
-        if aug=='randaugment':  augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose)
+        if aug=='randaugment':
+            tfms = None
+            if aug_params is not None:
+                if aug_params=='noise': tfms = all_noise_augs(magnitude=magnitude)
+                if aug_params=='erasing': tfms = all_erasing_augs(magnitude=magnitude)
+                if aug_params=='zoom': tfms = all_zoom_augs(magnitude=magnitude)
+                if aug_params=='nodim':
+                    tfms = all_augs(magnitude=magnitude)
+                    tfms = [tfm for tfm in tfms if not isinstance(tfm, Dimout)]
+            augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose, tfms=tfms)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='rand_tsai':
             augs = [ToTsaiTensor(), tsai_tfms.RandAugment(tsai_tfms.all_TS_randaugs[:2], N=N, M=int(magnitude*10))]
