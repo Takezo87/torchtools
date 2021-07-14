@@ -463,6 +463,13 @@ class TSExperiments:
                 if aug_params=='nodim':
                     tfms = all_augs(magnitude=magnitude)
                     tfms = [tfm for tfm in tfms if not isinstance(tfm, Dimout)]
+                if aug_params=='custom':
+                    tfms = all_erasing_augs(magnitude=magnitude) + all_zoom_augs(magnitude=magnitude) + all_noise_augs(magnitude=.4)
+                    tfms = [tfm for tfm in tfms if not isinstance(tfm, Dimout)]
+                if aug_params=='erasing_zoom':
+                    tfms = all_erasing_augs(magnitude=magnitude) + all_zoom_augs(magnitude=magnitude)
+                if aug_params=='noise_selected':
+                    tfms = [TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude), YNormalMul(magnitude=magnitude)]
             augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose, tfms=tfms)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='rand_tsai':
