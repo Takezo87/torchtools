@@ -468,8 +468,10 @@ class TSExperiments:
                     tfms = [tfm for tfm in tfms if not isinstance(tfm, Dimout)]
                 if aug_params=='erasing_zoom':
                     tfms = all_erasing_augs(magnitude=magnitude) + all_zoom_augs(magnitude=magnitude)
-                if aug_params=='noise_selected':
-                    tfms = [TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude), YNormalMul(magnitude=magnitude)]
+                if aug_params=='ynoise_add': tfms = all_ynoise_add(magnitude=magnitude)
+                if aug_params=='ynoise_mul': tfms = all_ynoise_mul(magnitude=magnitude)
+                if aug_params=='timenoise': tfms = all_timenoise(magnitude=magnitude)
+
             augs=RandAugment(N=N, magnitude=magnitude, verbose=verbose, tfms=tfms)
 #         elif aug=='augmix': augs=Augmix(N=N, magnitude=magnitude, verbose=verbose)
         elif aug=='rand_tsai':
