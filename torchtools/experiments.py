@@ -365,14 +365,24 @@ class TSExperiments:
         self.model_path = ifnone(model_path, './experiments/models')
         self.results_path = ifnone(results_path, './experiments/results')
 
+    def _filt(self, df, cols_y):
+        '''
+        filter out nan targets
+        '''
+        for col in cols_y:
+            df = df[~df[col].isna()]
+        return df
+
     def setup_data(self, data_params):
         #read in dataframe
         self.data_params=data_params
-        self.df_base = pd.read_csv(data_params['df_path'], nrows=data_params['nrows'])
-
-        #get continuous, discrete, and dependent columns
+        get continuous, discrete, and dependent columns
         cols_c, cols_d, cols_y, splits, ss_dis = map(data_params.get, ['cols_c', 'cols_d', 'cols_y', 'splits', 'ss_dis'])
         cols_cat, cols_cont= map(data_params.get, ['cols_cat', 'cols_cont']) ## tabular data
+
+        self.df_base = self._filt(pd.read_csv(data_params['df_path'], nrows=data_params['nrows']), cols_y)
+
+        #
 
         prune = data_params.get('prune', None)
         if prune is not None:
