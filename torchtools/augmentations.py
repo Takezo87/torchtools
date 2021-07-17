@@ -493,7 +493,7 @@ def encodes(self, x:TSIntTensor):
 class CutoutMean(AugTransform):
     def encodes(self, x:TSTensor):
         pv('cutout', verbose=self.verbose)
-        return partail(_cutout, mean=True)(x, magnitude=self.magnitude)
+        return partial(_cutout, mean=True)(x, magnitude=self.magnitude)
     def encodes(self, x:TSIntTensor):
         return cast(self.__call__(TSTensor(x.float())).type(x.dtype), type(x))
 

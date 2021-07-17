@@ -380,7 +380,11 @@ class TSExperiments:
         cols_c, cols_d, cols_y, splits, ss_dis = map(data_params.get, ['cols_c', 'cols_d', 'cols_y', 'splits', 'ss_dis'])
         cols_cat, cols_cont= map(data_params.get, ['cols_cat', 'cols_cont']) ## tabular data
 
-        self.df_base = self._filt(pd.read_csv(data_params['df_path'], nrows=data_params['nrows']), cols_y)
+        if not data_params.get('inference'):
+            self.df_base = self._filt(pd.read_csv(data_params['df_path'], nrows=data_params['nrows']), cols_y)
+        else:
+            self.df_base = pd.read_csv(data_params['df_path'], nrows=data_params['nrows'])
+
 
         prune = data_params.get('prune', None)
         if prune is not None:
@@ -568,7 +572,8 @@ class TSExperiments:
 
 # Cell
 def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitter_fn=TSSplitter(),
-                      col_config=None, col_fn=None, bs=64, nrows=None, ss_dis=True, classification=False):
+                      col_config=None, col_fn=None, bs=64, nrows=None, ss_dis=True, classification=False,
+                      inference=False):
 #     assert col_config or col_fn, 'need to pass either cont. cols and y cols, or a col_fn'
 
     assert col_config, 'need to pass columns configuration'
@@ -587,7 +592,8 @@ def build_data_params(df_path, trn_end=None, val_end=None, test_end=None, splitt
     data_params = defaultdict(lambda:None, {'df_path':df_path, 'splits':splits, 'col_config_id':cols_config_id,
                                             'cols_c':cols_c, 'cols_d':cols_d, 'cols_y':cols_y, 'cols_cont':cols_cont,
                                              'cols_cat':cols_cat, 'hcodds_col': hcodds_col, 'bs':bs, 'prune':prune,
-                                            'nrows':nrows, 'ss_dis':ss_dis,'classification':classification})
+                                            'nrows':nrows, 'ss_dis':ss_dis,'classification':classification,
+                                            'inference':inference})
 #                'ds_full_path':ds_full_path,
                  #'dataset_name':dataset_id,
 
