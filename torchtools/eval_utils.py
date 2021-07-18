@@ -143,9 +143,13 @@ def load_preds_from_path(ts_experiment, fn, arch, dl_idx=2):
     return preds
 
 def complement_idxs(idxs):  
+    '''pandas index input'''
     def _c(idx):
         return idx+1 if idx%2==0 else idx-1
-    return tensor([_c(idx) for idx in idxs.numpy()])
+    if isinstance(idxs, pd.Index):
+        return tensor([_c(idx) for idx in idxs.numpy()])
+    else:
+        return tensor([_c(idx) for idx in idxs])
 
 def combine_idxs(idxs1, idxs2):
     return list(set(idxs1.numpy()).union(set(idxs2.numpy())))
@@ -164,6 +168,7 @@ def get_opp_preds(df, preds_col='preds'):
     create a column for the opponent predictions
     '''
     idxs_c = complement_idxs(tensor(df.index))
+    df['preds_opp'] = df.iloc[idxs_c][preds_col].values
    
 def eval_ou_df(df, q=0.95, min_date=datetime(2010,1,1), by_year=False):
     df.date = pd.to_datetime(df.date)
