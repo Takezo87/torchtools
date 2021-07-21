@@ -448,11 +448,13 @@ class TSExperiments:
     def run_training(self, arch=None, seed=1234, n_epochs=None, max_lr=None, wd=None,
                      loss_fn_name=None, alpha=None, metrics=unweighted_profit,
                      N=2, magnitude=0.1, pct_start=0.3, div_factor=25.0, aug='randaugment',
-                     verbose=False, weight=None, save_best=False, aug_params=None, **kwargs):
+                     verbose=False, weight=None, save_best=False, aug_params=None,
+                     lr_sched='onecycle', n_cycles=None, cycle_len=None, cycle_mul=None, **kwargs):
         # model = ResNetSig(db.features, db.c).to(device)
         '''
         run a training cycle
         parameterization important for keeping track
+        lr_sched: ['onecycle', 'restarts']
         '''
         assert loss_fn_name and n_epochs, 'must pass loss_fn_name, and n_epochs'
 
@@ -528,7 +530,15 @@ class TSExperiments:
         print(learn.dls.after_batch)
 
 #         print(f'wd: {wd} {learn.wd}')
-        learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
+#
+        assert lr_sched in ['onecycle', 'restarts'], f'only `onecycle` and `restarts` accepted'
+        if lr_sched=='oncycle':
+            learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
+        else:
+            assert n_cycles is not None, f'n_cycles needs to be specified in train_params for fit_sgdr'
+            assert cycle_len is not None, f'cycle_len needs to be specified in train_params for fit_sgdr'
+            assert cycle_mul is not None, f'cycle_mul needs to be specified in train_params for fit_sgdr'
+            learn.fit_sgdr(n_cycles, cycle_len, lr_max=max_lr, cycle_mult=cycle_mul, cbs=None, reset_opt=False, wd=None)
 #         learn.fit_one_cycle(n_epochs, max_lr, wd=wd)
     #     learn.recorder.plot_losses()
     #     learn.recorder.plot_metrics()
