@@ -399,6 +399,22 @@ class TSExperiments:
 #         print(splits, callable(splits))
         self.splits = splits(self.df_base) if callable(splits) else splits
 #         print(self.splits)
+#
+        #filter training data
+        if data_params.get('filt_leagues') is not None:
+            #filter training data
+
+            end_train, end_valid, end_test = self.splits[0][-1], self.splits[1][-1], self.splits[2][-1]
+            df_train = self.df_base.iloc[0:end_train].copy()
+            df_train = df_train.loc[~df_train.league.isin(data_params['filt_leagues'])]
+            #adjust splits
+            diff = end_train - df_train.shape[0]
+            print(f'diff: {diff}')
+            self.splits[0] = L(range(0, end_train-diff+1))
+            self.splits[1] = L(range(end_train-diff+1, end_valid-diff+1))
+            self.splits[2] = L(range(end_valid-diff+1, end_test-diff+1))
+            self.df_base = pd.concat([df_train, self.df_base.iloc[end_train:]])
+
 
         ##store some of the data parameters for later use
         self.bs = data_params['bs']
@@ -532,7 +548,7 @@ class TSExperiments:
 #         print(f'wd: {wd} {learn.wd}')
 #
         assert lr_sched in ['onecycle', 'restarts'], f'only `onecycle` and `restarts` accepted'
-        if lr_sched=='oncycle':
+        if lr_sched=='onecycle':
             learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
         else:
             assert n_cycles is not None, f'n_cycles needs to be specified in train_params for fit_sgdr'
@@ -558,6 +574,8 @@ class TSExperiments:
         self.df_dict.update(_to_flat_dict(train_params))
         self.df_dict.update(get_recorder_dict(self.learn.recorder))
         self.df_dict['Timestamp'] = str(datetime.now())
+        if self.data_params.get('filt_leagues') is not None:
+            self.df_dict['filt_leagues'] = self.data_params.get('filt_leagues')
         ## store prediction in a separate file as tensors, but add filename
         self._save_preds(test=False)
         if self.save_model: self._save_model()
