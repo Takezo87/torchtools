@@ -369,6 +369,7 @@ class TSExperiments:
         '''
         filter out nan targets
         '''
+        if not isinstance(cols_y, list): cols_y=[cols_y]
         for col in cols_y:
             df = df[~df[col].isna()]
         return df

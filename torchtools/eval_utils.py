@@ -229,7 +229,7 @@ def eval_ou_df(df, q=0.95, min_date=datetime(2010,1,1), by_year=False):
 
 
 def basic_eval(eval_conf, model_idx, test=False, threshold=None, quantile=0.9, complement=False,
-        target_cols=['y0', 'y1']):
+        target_cols=['y0', 'y1'], end_train=170000, end_valid=200000, end_test=230000):
     '''
     reload model prediction for one or more(ensemble) model indices and do a basic evaluation
     '''
@@ -239,9 +239,9 @@ def basic_eval(eval_conf, model_idx, test=False, threshold=None, quantile=0.9, c
         preds = _reload_preds(eval_conf, model_idx, test=test)
    
     if test:
-        splits=[L(range(170000)), L(range(200000,230000))] ##TODO put into eval_conf
+        splits=[L(range(end_train)), L(range(end_valid, end_test))] ##TODO put into eval_conf
     else:
-        splits=[L(range(170000)), L(range(170000,230000))]
+        splits=[L(range(end_train)), L(range(end_train, end_valid))]
         
     bet_idxs = _get_bet_idxs(preds, threshold, quantile, complement=complement)
     print(eval_conf.df_base.iloc[splits[1]].iloc[bet_idxs][target_cols].agg(['mean', 'sum', 'count']))
