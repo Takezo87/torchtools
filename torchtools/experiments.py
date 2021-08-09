@@ -388,7 +388,7 @@ class TSExperiments:
         if not data_params.get('inference'):
             if parquet:
                 self.df_base = self._filt(pd.read_parquet(df_path), cols_y)
-\           else:
+            else:
                 self.df_base = self._filt(pd.read_csv(data_params['df_path'], nrows=data_params['nrows']), cols_y)
         else:
             if parquet:
