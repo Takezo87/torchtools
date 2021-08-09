@@ -383,7 +383,7 @@ class TSExperiments:
 
         df_path = data_params['df_path']
         parquet = df_path.name.endswith('.parquet')
-        assert ~(parquet and data_params['nrows']>0), f'cannot use nrows parameter with parquet files'
+        assert ~(parquet and data_params['nrows'] is not None), f'cannot use nrows parameter with parquet files'
 
         if not data_params.get('inference'):
             if parquet:
@@ -393,8 +393,8 @@ class TSExperiments:
         else:
             if parquet:
                 self.df_base = pd.read_parquet(df_path)
-
-            self.df_base = pd.read_csv(df_path, nrows=data_params['nrows'])
+            else:
+                self.df_base = pd.read_csv(df_path, nrows=data_params['nrows'])
 
 
         prune = data_params.get('prune', None)
