@@ -104,7 +104,9 @@ class EvalConfig:
         print(self.df_base_path)
         cols = ['pl_ah', 'pl_ah_opp', 'pl_1x2', 'pl_1x2_opp']
         if not self.usecols: cols=None
-        if not hasattr(self, '_df_base'): self._df_base = pd.read_csv(self.df_base_path, usecols=cols)
+        if not hasattr(self, '_df_base'):
+            # self._df_base = pd.read_csv(self.df_base_path, usecols=cols)
+            self._df_base = pd.read_parquet(self.df_base_path, columns=cols)
         return self._df_base
     @property
     def m_cols(self):
