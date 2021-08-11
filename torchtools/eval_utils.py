@@ -44,7 +44,7 @@ def _get_mock_learner(ts_experiment, arch):
     #return Learner(ts_runner.db, model=ts_runner.train_params['arch'](ts_runner.db.features, ts_runner.db.c))
     print(arch)
     model = get_mod(ts_experiment.dls, arch=arch, dropout=0.1, fc_dropout=0.1)
-    print(model)
+    # print(model)
     if arch=='transformer_dl':
         learn = Learner(ts_experiment.dls, model, get_loss_fn('double_loss_squared', alpha=0.5))
     else:

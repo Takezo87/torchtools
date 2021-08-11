@@ -69,7 +69,7 @@ def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
-def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=None, pe='zeros'):
+def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=None, pe='zeros', d_model=128, n_heads=16):
     '''
     architectures:
     - inception
@@ -90,7 +90,7 @@ def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=Non
 
     elif arch=='transformer_dl': #hack, works only for continuous channels and exactly 2 targets with double_loss
         #return TST(dls.n_channels, 1, 10):
-        model = TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, fc_dropout=fc_dropout, y_range=(-1,1))
+        model = TSTPlus(dls.n_channels, 1, seq_len=10, res_dropout=dropout, fc_dropout=fc_dropout, y_range=(-1,1), pe=pe, d_model=d_model, n_heads=n_heads)
 
     elif dls.n_channels==0:
         assert dls.cols_cat is not None or dls.cols_cont is not None, 'no tabular columns'
@@ -116,7 +116,7 @@ def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=Non
             if arch=='tst':
                 #return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
                 model = TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1),
-                pe=pe)
+                pe=pe, d_model=d_model, n_heads=n_heads)
             elif arch=='transformer':
                 model = TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
