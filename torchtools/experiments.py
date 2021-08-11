@@ -69,7 +69,7 @@ def get_emb_sz(to, sz_dict=None):
     "Get default embedding size from `TabularPreprocessor` `proc` or the ones in `sz_dict`"
     return [_one_emb_sz(to.classes, n, sz_dict) for n in to.cat_names]
 
-def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=None):
+def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=None, pe='zeros'):
     '''
     architectures:
     - inception
@@ -115,8 +115,9 @@ def get_mod(dls, arch='inception', dropout=None, fc_dropout=None, pretrained=Non
         else:
             if arch=='tst':
                 #return TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
-                model = TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1))
-            if arch=='transformer':
+                model = TSTPlus(dls.n_channels, dls.n_targets, seq_len=10, res_dropout=dropout, y_range=(-1,1),
+                pe=pe)
+            elif arch=='transformer':
                 model = TransformerSgm(dls.n_channels, dls.n_targets, res_dropout=dropout)
             else:
                 model = InceptionTimeSgm(dls.n_channels, dls.n_targets)
@@ -549,9 +550,13 @@ class TSExperiments:
         if self.train_params.get('pretrained') is not None:
             pretrained = Path(self.model_path)/'pretrained'/self.train_params.get('pretrained')
 
+        pe = 'zeros'
+        if self.train_params.get('pe') is not None:
+            pe = self.train_params.get('pe')
+
 #         model = arch(self.dls.n_channels, self.dls.n_targets)
         model = get_mod(self.dls, arch=self.train_params['arch'], dropout=self.train_params.get('dropout'),
-                       fc_dropout=self.train_params.get('fc_dropout'), pretrained=pretrained)
+                       fc_dropout=self.train_params.get('fc_dropout'), pretrained=pretrained, pe=pe)
         learn = Learner(self.dls, model, loss_func=loss_fn, metrics=metrics, model_dir=self.model_path,
                        wd=wd, cbs=cbs)
         print(learn.dls.after_batch)

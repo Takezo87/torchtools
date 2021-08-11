@@ -42,7 +42,9 @@ def pre_process_results(df_results):
 
 def _get_mock_learner(ts_experiment, arch):
     #return Learner(ts_runner.db, model=ts_runner.train_params['arch'](ts_runner.db.features, ts_runner.db.c))
+    print(arch)
     model = get_mod(ts_experiment.dls, arch=arch, dropout=0.1, fc_dropout=0.1)
+    print(model)
     if arch=='transformer_dl':
         learn = Learner(ts_experiment.dls, model, get_loss_fn('double_loss_squared', alpha=0.5))
     else:
@@ -128,15 +130,19 @@ def delete_model(eval_conf, idx):
     print(fn)
     os.remove(eval_conf.model_dir/Path(fn).name)
 
-def _reload_model(ts_experiment, eval_conf, idx):
+def _reload_model(ts_experiment, eval_conf, idx, use_best=False):
     '''
     load model into ts_experiment
     '''
     fn = eval_conf.df_results.iloc[idx]['model_fn']
+    # print('fn')
     arch = eval_conf.df_results.iloc[idx]['arch']
     print(arch)
     ts_experiment.learn = _get_mock_learner(ts_experiment, arch)
-    ts_experiment.learn.load(eval_conf.model_dir/Path(fn).stem)
+    if not use_best:
+        ts_experiment.learn.load(eval_conf.model_dir/Path(fn).stem)
+    else:
+        ts_experiment.learn.load(eval_conf.model_dir/(Path(fn).stem+'_best_val'))
     return
 
     if not test:
@@ -153,10 +159,10 @@ def _reload_model_from_path(ts_experiment, fn, arch):
     # print(ts_experiment.learn.model)
     ts_experiment.learn.load(Path(fn).stem)
 
-def load_preds(ts_experiment, eval_conf, idxs, dl_idx=2):
+def load_preds(ts_experiment, eval_conf, idxs, dl_idx=2, use_best=False):
     preds = []
     for idx in idxs:
-        _reload_model(ts_experiment, eval_conf, idx)
+        _reload_model(ts_experiment, eval_conf, idx, use_best=use_best)
         #fix, with fastcore 1.3.20 and fastai 2.3.1, get_preds removes TSStandardize from the
         #dataloader
         tsstandardize = ts_experiment.dls[dl_idx].after_batch[0] #more than one transform?
@@ -283,7 +289,7 @@ def basic_eval_ou(eval_conf, model_idx, test=False, threshold=None, quantile=0.9
     if is_listy(model_idx):
         preds = _average_preds(eval_conf, model_idx, test=test)
     else:
-        preds = _reload_preds(eval_conf, model_idx, test=test)
+        preds = _relead_preds(eval_conf, model_idx, test=test)
    
     if test:
         splits=[L(range(end_train)), L(range(end_train,end_val))] ##TODO put into eval_conf
