@@ -563,14 +563,16 @@ class TSExperiments:
 
 #         print(f'wd: {wd} {learn.wd}')
 #
-        assert lr_sched in ['onecycle', 'restarts'], f'only `onecycle` and `restarts` accepted'
+        assert lr_sched in ['onecycle', 'restarts', 'flat_cos'], f'only `onecycle`, 'flat_cos', and `restarts` accepted'
         if lr_sched=='onecycle':
             learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
-        else:
+        elif lr_sched=='restarts':
             assert n_cycles is not None, f'n_cycles needs to be specified in train_params for fit_sgdr'
             assert cycle_len is not None, f'cycle_len needs to be specified in train_params for fit_sgdr'
             assert cycle_mul is not None, f'cycle_mul needs to be specified in train_params for fit_sgdr'
             learn.fit_sgdr(n_cycles, cycle_len, lr_max=max_lr, cycle_mult=cycle_mul, cbs=None, reset_opt=False, wd=None)
+        elif lr_sched=='flat_cos':
+            learn.fit_flat_cos(n_epochs, lr=max_lr, div_final=100., pct_start=.8, wd=wd)
 #         learn.fit_one_cycle(n_epochs, max_lr, wd=wd)
     #     learn.recorder.plot_losses()
     #     learn.recorder.plot_metrics()
