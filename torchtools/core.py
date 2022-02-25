@@ -60,8 +60,10 @@ def double_loss_squared(preds, y_true, alpha=0.5):
     '''
     loss function, preds is 1d, y_true is 2d
     '''
-    #print(preds.shape, y_true.shape)
-    preds, y_true = preds.squeeze(), y_true.squeeze()
+    preds, y_true = preds.squeeze(-1), y_true.squeeze(-1)
+    # print(preds.shape, y_true.shape)
+    assert len(preds.shape)==1
+    assert len(y_true.shape)==2
 
     over_idxs = preds>0
     loss_over = torch.square(preds[over_idxs]) * y_true[over_idxs, 0]

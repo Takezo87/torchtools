@@ -563,7 +563,7 @@ class TSExperiments:
 
 #         print(f'wd: {wd} {learn.wd}')
 #
-        assert lr_sched in ['onecycle', 'restarts', 'flat_cos'], f'only `onecycle`, 'flat_cos', and `restarts` accepted'
+        assert lr_sched in ['onecycle', 'restarts', 'flat_cos'], f'only `onecycle`, `flat_cos`, and `restarts` accepted'
         if lr_sched=='onecycle':
             learn.fit_one_cycle(n_epochs, max_lr, wd=wd, pct_start=pct_start, div=div_factor)
         elif lr_sched=='restarts':

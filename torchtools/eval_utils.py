@@ -166,7 +166,9 @@ def load_preds(ts_experiment, eval_conf, idxs, dl_idx=2, use_best=False):
         #fix, with fastcore 1.3.20 and fastai 2.3.1, get_preds removes TSStandardize from the
         #dataloader
         tsstandardize = ts_experiment.dls[dl_idx].after_batch[0] #more than one transform?
+        # dl = ts_experiment.dls[dl_idx]
         p, y = ts_experiment.learn.get_preds(dl_idx)
+        # p, y = ts_experiment.learn.get_preds(dl=dl)
         ts_experiment.dls[dl_idx].after_batch.add(tsstandardize)
         assert len(ts_experiment.dls[dl_idx].after_batch.fs)==1
         # print(ts_experiment.dls[dl_idx].after_batch[0].mean)
@@ -221,6 +223,7 @@ def yval_for_classification(df, splits):
     y, maps = cats_from_df(df, ['y2'], n_train, add_na=False)
     print(maps)
     return tensor(y[splits[1]])
+
 def get_opp_preds(df, preds_col='preds'):
     '''
     create a column for the opponent predictions
