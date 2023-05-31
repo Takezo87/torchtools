@@ -149,6 +149,7 @@ def _reload_model(ts_experiment, eval_conf, idx, use_best=False):
         fn = eval_conf.preds_dir/eval_conf.df_results.iloc[idx]['val_preds'] 
     else:
         fn=eval_conf.preds_dir/eval_conf.df_results.iloc[idx]['test_preds']
+    print(fn)
     return torch.load(fn)
 
 def _reload_model_from_path(ts_experiment, fn, arch):

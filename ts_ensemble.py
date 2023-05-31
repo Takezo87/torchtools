@@ -67,5 +67,7 @@ df_test.query(f'status=="open" and date>=datetime.utcnow()')[['date', 'horse', '
 # df_test.to_csv('/home/johannes/coding/commonresources/matchupinfo/transformer_ensemble_expansion.csv')
 # df_test.query('status=="open"')[['date', 'horse', 'opponent', 'horse_1x2','preds']].to_csv('/home/johannes/coding/commonresources/matchupinfo/transformer_ensemble.csv')
 
+df_test.query(f'status=="final_result"')[['xeid', 'date', 'horse', 'opponent', 'horse_1x2','preds', 'preds_opp']+['pl_ah', 'pl_1x2']+['league', 'season', 'country', 'category', 'field']].to_parquet('/home/johannes/coding/commonresources/matchupinfo/transformer_ensemble_completed.parquet')
+# df_test.to_csv('/home/johannes/coding/commonresources/matchupinfo/transformer_ensemble_expansion.csv')
 
 ifnone
